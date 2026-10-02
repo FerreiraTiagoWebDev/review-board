@@ -1,0 +1,10 @@
+{
+  "name": "review-board",
+  "description": "Visual review board for pull requests, branches and merge trains: a Source Control style page with file tree, diffs, curated reading order, findings pinned to lines, verification results and queued decisions, reviewed in Lavish.",
+  "version": "0.1.0",
+  "author": { "name": "Tiago Ferreira", "url": "https://github.com/FerreiraTiagoWebDev" },
+  "homepage": "https://github.com/FerreiraTiagoWebDev/review-board",
+  "repository": "https://github.com/FerreiraTiagoWebDev/review-board",
+  "license": "MIT",
+  "keywords": ["code-review", "pull-request", "lavish", "diff", "claude-code-skill"]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "review-board",
+  "owner": { "name": "Tiago Ferreira", "url": "https://github.com/FerreiraTiagoWebDev" },
+  "plugins": [
+    {
+      "name": "review-board",
+      "source": "./",
+      "description": "Visual review board for pull requests, branches and merge trains, reviewed in Lavish."
+    }
+  ]
+}
