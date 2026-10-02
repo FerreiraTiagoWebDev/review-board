@@ -1148,6 +1148,14 @@ function openFile(key) {
   renderNav();
   renderDiffPane();
   document.querySelector('.row.sel')?.scrollIntoView({ block: 'nearest' });
+  revealDiff();
+}
+
+function revealDiff() {
+  const pane = document.getElementById('diffpane');
+  if (!pane) return;
+  const top = pane.getBoundingClientRect().top;
+  if (top < 0 || top > window.innerHeight * 0.4) pane.scrollIntoView({ block: 'start', behavior: 'smooth' });
 }
 
 function toggleViewed(key, force) {
