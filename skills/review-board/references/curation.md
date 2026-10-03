@@ -20,19 +20,19 @@ Edit it and rerun the build; never edit the generated page.
           "id": "1247-F1",
           "severity": "medium",
           "verdict": "PLAUSIBLE",
-          "file": "apps/website/src/components/player/mini-player/hooks/useResizablePanelHeight.ts",
+          "file": "src/session/refresh.ts",
           "line": 49,
           "text": "Verbatim finding text from /code-review: defect, repro, fix."
         }
       ],
       "files": {
-        "apps/website/src/components/player/mini-player/hooks/useResizablePanelHeight.ts": {
+        "src/session/refresh.ts": {
           "tier": "core",
           "note": "One line: what this file does in the change and why to read it. Mandatory for core."
         },
-        "apps/website/src/components/player/mini-player/constants.ts": { "tier": "supporting", "note": "Optional." },
-        "apps/admin/src/routeTree.gen.ts": { "tier": "generated", "note": "Auto-generated. Never hand-edited." },
-        "apps/backend/src/env/index.ts": { "tier": "supporting", "flags": ["config", "auth"] }
+        "src/session/constants.ts": { "tier": "supporting", "note": "Optional." },
+        "src/routes.gen.ts": { "tier": "generated", "note": "Auto-generated. Never hand-edited." },
+        "src/env/index.ts": { "tier": "supporting", "flags": ["config", "auth"] }
       }
     }
   },
@@ -45,7 +45,7 @@ Edit it and rerun the build; never edit the generated page.
     "rows": [
       { "check": "pnpm lint:check", "result": "pass" },
       { "check": "pnpm test all", "result": "pass" },
-      { "check": "pnpm backend:test:integration", "result": "1 fail, pre-existing on develop: <what>" }
+      { "check": "pnpm test:integration", "result": "1 fail, pre-existing on develop: <what>" }
     ]
   },
   "decisions": [
@@ -72,7 +72,7 @@ Edit it and rerun the build; never edit the generated page.
 - **Verification rows** state the exact command and the exact result.
   `pass` renders green; anything containing `fail` or `error` renders amber; other text renders plain.
   Omit the block in light mode.
-- **Decisions** are flow questions only (push, open PR, do the config fix).
-  Finding dispositions are not decisions: the page builds the tracked batch from `findings` itself.
+- **Decisions** are flow questions only (push, open PR, do the config fix); the page lists each with its options and the reviewer answers by annotating the option in Lavish.
+  Finding dispositions are not decisions: the reviewer annotates the finding itself.
 - **Summaries describe behaviour, not files**: say what changed for the user or the system, and why; the tree already shows which files.
 - Write every sentence as if the reader has not seen the branch; this page is often read the next morning.

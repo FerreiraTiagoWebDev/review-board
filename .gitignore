@@ -1,3 +1,6 @@
 node_modules/
 .DS_Store
 reviews/
+test-results/
+playwright-report/
+.cache/

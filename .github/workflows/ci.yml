@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Lint, types, tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+
+  plugin:
+    name: Plugin manifest and install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Validate manifests
+        run: pnpm validate:plugin
+        env:
+          CLAUDE_BIN: pnpm dlx @anthropic-ai/claude-code
+      - name: Install with skills.sh and build a board from the installed copy
+        run: |
+          project="$RUNNER_TEMP/project"
+          mkdir "$project" && cd "$project"
+          git init --quiet
+          git -c user.name=ci -c user.email=ci@example.com commit --quiet --allow-empty -m base
+          pnpm dlx skills@latest add "$GITHUB_WORKSPACE" --agent claude-code --yes --copy
+          skill=.claude/skills/review-board
+          test -f "$skill/SKILL.md"
+          for unwanted in package.json test node_modules .github; do test ! -e "$skill/$unwanted"; done
+          echo 'export const x = 1;' > x.ts
+          node "$skill/scripts/init.mjs"
+          echo '{ "slug": "wt", "changeSets": [{ "id": "worktree", "kind": "worktree" }] }' > reviews/wt.review.json
+          node "$skill/scripts/build.mjs" reviews/wt.review.json
+          grep -q '"path":"x.ts"' reviews/wt.html
+
+  e2e:
+    name: Page in a browser
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - uses: actions/cache@v4
+        with:
+          path: .cache/e2e/esm.sh.har
+          key: esm-sh-${{ hashFiles('skills/review-board/assets/skeleton.html') }}
+      - run: pnpm test:e2e
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7
