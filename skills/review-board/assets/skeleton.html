@@ -1,0 +1,1154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Review board</title>
+<!-- Colours: VS Code Dark Modern. Icons: Codicons by Microsoft, CC BY 4.0, https://github.com/microsoft/vscode-codicons -->
+<style>
+:root {
+  --bg: #1f1f1f;
+  --side: #181818;
+  --fg: #cccccc;
+  --bright: #ffffff;
+  --card: #202020;
+  --dim: #9d9d9d;
+  --accent: #0078d4;
+  --accent-hover: #026ec1;
+  --focus: #0078d4;
+  --link: #4daafc;
+  --mauve: #37373d;
+  --hover: #2a2d2e;
+  --selected: #04395e;
+  --line: #2b2b2b;
+  --widget-line: #313131;
+  --input: #313131;
+  --input-line: #3c3c3c;
+  --placeholder: #989898;
+  --badge: #616161;
+  --badge-fg: #f8f8f8;
+  --toolbar-hover: #5a5d5e50;
+  --destructive: #f85149;
+  --success: #81b88b;
+  --warning: #e2c08d;
+  --info: #4daafc;
+  --renamed: #73c991;
+  --deleted: #c74e39;
+  --icon-error: #f14c4c;
+  --icon-warning: #cca700;
+  --icon-info: #3794ff;
+  --icon-pass: #73c991;
+  --guide: #585858;
+  --line-number: #6e7681;
+  --diff-added: #9ccc2c;
+  --diff-removed: #ff0000;
+  --r: 2px;
+  --row: 22px;
+  --sidebar-w: 280px;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, Ubuntu, 'Droid Sans', sans-serif;
+  --mono: Menlo, Monaco, 'Courier New', monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+html { background: var(--bg); }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 400 13px/1.4 var(--font); overflow: hidden; }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; background: none; border: 0; padding: 0; }
+a { color: var(--link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+:focus-visible { outline: 1px solid var(--focus); outline-offset: -1px; }
+.codicon { width: 16px; height: 16px; flex: none; }
+.mono { font-family: var(--mono); }
+.dim { color: var(--dim); }
+.badge { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 6px; border-radius: 9px; background: var(--badge); color: var(--badge-fg); font: 400 11px/18px var(--font); flex: none; }
+.ibtn { width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border-radius: 5px; color: var(--fg); flex: none; }
+.ibtn:hover { background: var(--toolbar-hover); }
+.ibtn[aria-pressed="true"] { background: #2489db82; outline: 1px solid #2488db; outline-offset: -1px; }
+.ibtn[aria-pressed="true"]:focus-visible { outline-color: var(--focus); }
+.sev-high { color: var(--icon-error); }
+.sev-medium { color: var(--icon-warning); }
+.sev-low { color: var(--icon-info); }
+.add { color: var(--success); }
+.del { color: var(--destructive); }
+.s-A, .s-A .name { color: var(--success); }
+.s-M, .s-M .name { color: var(--warning); }
+.s-D, .s-D .name { color: var(--deleted); }
+.s-R, .s-R .name { color: var(--renamed); }
+.tone-destructive { color: var(--destructive); } .tone-warning { color: var(--warning); } .tone-info { color: var(--info); } .tone-success { color: var(--success); } .tone-dim { color: var(--dim); }
+
+.workbench { height: 100vh; display: grid; grid-template-rows: auto minmax(0, 1fr) 22px; }
+
+.top { grid-row: 1; display: grid; gap: 6px; padding: 8px 12px; background: var(--side); border-bottom: 1px solid var(--line); min-width: 0; }
+.toprow { display: flex; align-items: baseline; gap: 12px; min-width: 0; }
+.top h1 { margin: 0; display: inline-flex; align-items: center; gap: 6px; font: 600 13px/22px var(--font); color: var(--bright); min-width: 0; flex: none; max-width: 50%; }
+.top h1 .codicon { color: var(--dim); }
+.top h1 span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.top .lead { margin: 0; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips:empty { display: none; }
+.step { display: inline-flex; align-items: center; gap: 8px; height: 24px; padding: 0 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--fg); white-space: nowrap; min-width: 0; max-width: 100%; cursor: pointer; font-size: 12px; }
+.step:hover { border-color: var(--dim); }
+.step.on { border-color: var(--accent); background: var(--selected); color: var(--bright); }
+.step .t { font-weight: 600; }
+.step .dim { overflow: hidden; text-overflow: ellipsis; }
+
+.body { grid-row: 2; display: grid; grid-template-columns: var(--sidebar-w) minmax(0, 1fr); min-height: 0; overflow: hidden; }
+.sidebar { background: var(--side); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+.tree { overflow: auto; flex: 1 1 auto; min-height: 0; padding: 6px 0 16px; outline: none; }
+.tree:not(:hover) { --guide: transparent; }
+.row { display: flex; align-items: center; height: var(--row); line-height: var(--row); padding-right: 12px; min-width: 0; cursor: pointer; white-space: nowrap; user-select: none; }
+.row:hover { background: var(--hover); }
+.row.sel { background: var(--mauve); }
+.tree:focus-within .row.sel { background: var(--selected); color: var(--bright); }
+.row.cur { outline: 1px solid var(--focus); outline-offset: -1px; }
+.row .twistie { width: 16px; height: 16px; flex: none; display: inline-flex; align-items: center; justify-content: center; color: var(--fg); }
+.row .name { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; padding-left: 2px; }
+.row .viewed { width: 14px; height: 14px; margin: 0 6px 0 0; accent-color: var(--accent); cursor: pointer; flex: none; }
+.row .deco { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; padding-left: 8px; flex: none; }
+.row .st { width: 16px; text-align: center; font-size: 12px; font-weight: 600; flex: none; }
+.row.group { margin-top: 4px; }
+.row.group .name { font-size: 11px; font-weight: 700; text-transform: uppercase; }
+.row.group .badge { margin-left: 6px; }
+.row.group .hintlabel { margin-left: 8px; font-size: 11px; color: var(--dim); text-transform: none; font-weight: 400; }
+.row.file.t-core .name { font-weight: 600; }
+.row.file.s-D .name { text-decoration: line-through; }
+.row.t-tests .name, .row.t-generated .name, .row.t-tests .deco, .row.t-generated .deco { opacity: 0.6; }
+.row.isviewed .name, .row.isviewed .deco { opacity: 0.5; }
+.setbadge { font: 400 11px/var(--row) var(--mono); color: var(--dim); }
+.empty-tree { padding: 8px 16px; color: var(--dim); }
+
+.editor { display: grid; grid-template-rows: 35px auto minmax(0, 1fr); min-width: 0; min-height: 0; background: var(--bg); }
+.tabbar { display: flex; background: var(--side); border-bottom: 1px solid var(--line); min-width: 0; }
+.tabs { display: flex; flex: 1 1 auto; min-width: 0; overflow: hidden; }
+.tab { display: inline-flex; align-items: center; gap: 6px; height: 35px; padding: 0 8px 0 12px; border-right: 1px solid var(--line); color: var(--dim); background: var(--side); cursor: pointer; user-select: none; white-space: nowrap; flex: 0 1 auto; max-width: 320px; min-width: 0; }
+.tab:hover { background: var(--bg); }
+.tab.on { background: var(--bg); color: var(--bright); box-shadow: inset 0 1px 0 var(--accent); }
+.tab .codicon { color: var(--dim); }
+.tab .label { overflow: hidden; text-overflow: ellipsis; }
+.tab .desc { font-size: 11px; color: var(--dim); overflow: hidden; text-overflow: ellipsis; }
+.tab .st { font-size: 11px; font-weight: 600; }
+.tab-close { width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: 3px; color: inherit; margin-right: -2px; }
+.tab-close:hover { background: #ffffff1a; }
+.editor-actions { display: flex; align-items: center; gap: 2px; padding: 0 8px; flex: none; }
+.editor-actions .seg { display: inline-flex; gap: 2px; margin: 0 4px; }
+.filebar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; min-height: 26px; padding: 2px 12px; font-size: 12px; color: var(--dim); border-bottom: 1px solid var(--line); min-width: 0; }
+.filebar:empty { display: none; }
+.filebar .flag { font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+.filebar .flag .codicon { width: 14px; height: 14px; }
+.filebar .note { color: var(--fg); overflow-wrap: anywhere; }
+.filebar .right { margin-left: auto; display: inline-flex; gap: 12px; align-items: center; white-space: nowrap; }
+.editor-body { overflow: auto; min-height: 0; position: relative; }
+.diffwrap { min-width: 0; padding-bottom: 40vh; --diffs-dark-bg: var(--bg); --diffs-dark: var(--fg); --diffs-dark-addition-color: var(--diff-added); --diffs-dark-deletion-color: var(--diff-removed); --diffs-dark-modified-color: var(--accent); --diffs-fg-number-override: var(--line-number); --diffs-bg-separator-override: #262626; --diffs-font-family: var(--mono); --diffs-font-size: 12px; --diffs-line-height: 18px; }
+.diffnote { padding: 24px; color: var(--dim); }
+.emptystate { padding: 48px 24px; color: var(--dim); text-align: center; }
+
+.ov { padding: 16px 24px 48px; max-width: 1100px; }
+.ov-set + .ov-set, .ov-board { border-top: 1px solid var(--line); margin-top: 20px; padding-top: 16px; }
+.ov-head h2 { margin: 0; font-size: 16px; font-weight: 600; color: var(--bright); overflow-wrap: anywhere; }
+.ov-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; color: var(--dim); margin-top: 2px; font-size: 12px; }
+.ov-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 12px 40px; margin-top: 12px; }
+.ov-sec { min-width: 0; }
+.ov-sec h3 { margin: 0 0 2px; height: 22px; display: flex; align-items: center; gap: 6px; font: 700 11px/22px var(--font); text-transform: uppercase; color: var(--fg); }
+.ov-sec h3 .dim { text-transform: none; font-weight: 400; }
+.ov-sec .hint { margin: 0; padding: 0 8px; color: var(--dim); line-height: 22px; }
+.list { margin: 0; padding: 0; list-style: none; }
+.item { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; min-height: 22px; padding: 0 8px; min-width: 0; }
+.item:hover { background: var(--hover); }
+.item .n { width: 16px; color: var(--dim); font-size: 11px; text-align: right; flex: none; }
+.item .link { color: var(--fg); font-weight: 600; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; min-width: 0; line-height: 22px; }
+.item .link:hover { text-decoration: underline; }
+.item .noref { color: var(--dim); font-family: var(--mono); font-size: 12px; }
+.item .desc { color: var(--dim); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; min-width: 0; }
+.item .flags { display: inline-flex; flex-wrap: wrap; gap: 0 10px; font-size: 12px; font-weight: 600; }
+.item .note { flex: 1 1 100%; color: var(--dim); padding: 0 0 4px 24px; overflow-wrap: anywhere; }
+.item .fid { font-family: var(--mono); font-size: 11px; color: var(--dim); }
+.item .text { flex: 1 1 100%; min-width: 0; overflow-wrap: anywhere; padding: 0 0 4px 24px; color: var(--fg); }
+.item .text.inline { flex: 1 1 auto; padding: 0; }
+.item > .codicon { flex: none; }
+.sub { margin: 0 0 4px; padding: 0; list-style: none; flex: 1 1 100%; }
+.sub .item { padding-left: 24px; }
+.sub .item:hover { background: none; }
+.res-pass { color: var(--icon-pass); }
+.res-warn { color: var(--icon-warning); }
+.vrow { display: grid; grid-template-columns: 16px auto minmax(0, 1fr); gap: 8px; align-items: center; min-height: 22px; padding: 0 8px; }
+.vrow:hover { background: var(--hover); }
+.vrow .check { font-family: var(--mono); font-size: 12px; white-space: nowrap; }
+.vrow .result { overflow-wrap: anywhere; }
+.dec { padding: 2px 8px 8px; }
+.dec + .dec { border-top: 1px solid var(--line); }
+.dec .q { font-weight: 600; color: var(--fg); overflow-wrap: anywhere; min-height: 22px; line-height: 22px; }
+.dec ol { margin: 0; padding-left: 18px; }
+.dec li { line-height: 22px; }
+.disclosure { margin-top: 8px; }
+.disclosure summary { list-style: none; display: flex; align-items: center; gap: 2px; height: 22px; cursor: pointer; color: var(--dim); user-select: none; }
+.disclosure summary:hover { color: var(--fg); }
+.disclosure summary::-webkit-details-marker { display: none; }
+.disclosure summary .twistie { width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; }
+.disclosure[open] > summary .twistie .codicon { transform: rotate(90deg); }
+.md { padding: 4px 0 8px 18px; display: grid; gap: 6px; max-width: 75ch; }
+.md p { margin: 0; }
+.md .mdh { font-weight: 600; color: var(--bright); margin-top: 4px; }
+.md ul, .md ol { margin: 0; padding-left: 20px; display: grid; gap: 2px; }
+.md code { font-family: var(--mono); font-size: 12px; background: var(--input-line); color: #d0d0d0; border-radius: var(--r); padding: 0 4px; }
+.commits { margin: 0; padding: 0 0 8px 18px; list-style: none; }
+.commits li { height: 22px; line-height: 22px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.statusbar { grid-row: 3; display: flex; align-items: stretch; background: var(--side); border-top: 1px solid var(--line); font-size: 12px; color: var(--fg); min-width: 0; overflow: hidden; }
+.sb { display: inline-flex; align-items: center; gap: 4px; padding: 0 6px; white-space: nowrap; color: inherit; height: 22px; line-height: 22px; flex: none; }
+.sb .codicon { width: 14px; height: 14px; }
+button.sb:hover { background: #f1f1f133; color: var(--bright); }
+.sb.remote { background: var(--accent); color: #ffffff; padding: 0 8px; }
+.sb.hint { color: var(--dim); overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; min-width: 0; }
+.sb-right { margin-left: auto; display: inline-flex; min-width: 0; }
+
+textarea { background: var(--input); border: 1px solid var(--input-line); border-radius: var(--r); color: var(--fg); padding: 6px 8px; resize: vertical; width: 100%; }
+textarea:focus { outline: 1px solid var(--focus); outline-offset: -1px; border-color: var(--focus); }
+::placeholder { color: var(--placeholder); }
+.btn { background: var(--accent); color: #ffffff; border: 1px solid #ffffff1a; border-radius: var(--r); padding: 3px 11px; line-height: 18px; display: inline-flex; align-items: center; gap: 4px; }
+.btn:hover { background: var(--accent-hover); }
+.btn.ghost { background: transparent; color: var(--fg); border-color: var(--input-line); }
+.btn.ghost:hover { background: var(--line); }
+.pill { color: var(--dim); font-size: 12px; display: inline-flex; align-items: center; gap: 4px; }
+.pill.queued { color: var(--icon-pass); }
+.inline-answer { font-family: var(--mono); font-size: 12px; color: var(--dim); white-space: pre-wrap; overflow-wrap: anywhere; padding: 6px 8px; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ask { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 8px; font-size: 12px; color: var(--fg); border: 1px solid var(--input-line); border-radius: var(--r); }
+.ask:hover { background: var(--toolbar-hover); }
+.askpanel { margin: 4px 0; background: var(--card); border: 1px solid var(--widget-line); border-radius: var(--r); padding: 8px 10px; display: grid; gap: 6px; width: 100%; min-width: 0; text-align: left; font: 400 13px/1.4 var(--font); box-shadow: 0 2px 8px #0000005c; }
+.askref { font-size: 12px; font-family: var(--mono); color: var(--dim); overflow-wrap: anywhere; }
+.seltool { position: absolute; z-index: 60; background: var(--card); border: 1px solid var(--widget-line); border-radius: var(--r); padding: 6px 8px; display: grid; gap: 6px; max-width: min(560px, calc(100vw - 16px)); min-width: 0; box-shadow: 0 2px 8px #0000005c; font-size: 12px; }
+.seltool .selrow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.seltool .selrow .mono { margin-right: 4px; }
+.annot { margin: 4px 12px 4px 0; padding: 6px 10px; background: var(--card); border: 1px solid var(--widget-line); border-radius: var(--r); font: 400 13px/1.4 var(--font); display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.annot .text { flex: 1 1 100%; }
+
+@media (max-width: 1100px) { :root { --sidebar-w: 240px; } }
+@media (max-width: 899px) {
+  body { overflow: auto; }
+  .workbench { height: auto; display: block; }
+  .body { display: block; overflow: visible; }
+  .sidebar { border-right: 0; border-bottom: 1px solid var(--line); }
+  .tree { max-height: 50vh; }
+  .editor { display: block; }
+  .editor-body { overflow: visible; min-height: 40vh; }
+  .diffwrap { padding-bottom: 0; }
+  .statusbar { flex-wrap: wrap; }
+  .sb-right { margin-left: 0; flex-wrap: wrap; }
+  .ov { padding: 12px 16px 24px; }
+  .toprow { flex-wrap: wrap; gap: 2px 12px; }
+  .top h1 { max-width: 100%; }
+  .top .lead { white-space: normal; }
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script id="review-data" type="application/json">{"meta":{"title":"Review board","lead":"","mode":"branch","depth":"light","base":"","head":"","baseSha":"","headSha":"","generatedAt":"1970-01-01T00:00:00.000Z","slug":"skeleton"},"sets":[],"verification":null,"decisions":[],"usage":null}</script>
+<script type="module">
+import { FileDiff, processPatch } from 'https://esm.sh/@pierre/diffs@1.2.10?bundle';
+
+const DATA = JSON.parse(document.getElementById('review-data').textContent);
+const THEME = { light: 'light-plus', dark: 'dark-plus' };
+const ICONS = {
+  "error": "<path d=\"M8 1C4.14 1 1 4.14 1 8C1 11.86 4.14 15 8 15C11.86 15 15 11.86 15 8C15 4.14 11.86 1 8 1ZM8 14C4.691 14 2 11.309 2 8C2 4.691 4.691 2 8 2C11.309 2 14 4.691 14 8C14 11.309 11.309 14 8 14ZM10.854 5.854L8.708 8L10.854 10.146C11.049 10.341 11.049 10.658 10.854 10.853C10.756 10.951 10.628 10.999 10.5 10.999C10.372 10.999 10.244 10.95 10.146 10.853L8 8.707L5.854 10.853C5.756 10.951 5.628 10.999 5.5 10.999C5.372 10.999 5.244 10.95 5.146 10.853C4.951 10.658 4.951 10.341 5.146 10.146L7.292 8L5.146 5.854C4.951 5.659 4.951 5.342 5.146 5.147C5.341 4.952 5.658 4.952 5.853 5.147L7.999 7.293L10.145 5.147C10.34 4.952 10.657 4.952 10.852 5.147C11.047 5.342 11.047 5.659 10.852 5.854H10.854Z\"/>",
+  "warning": "<path d=\"M14.831 11.965L9.206 1.714C8.965 1.274 8.503 1 8 1C7.497 1 7.035 1.274 6.794 1.714L1.169 11.965C1.059 12.167 1 12.395 1 12.625C1 13.383 1.617 14 2.375 14H13.625C14.383 14 15 13.383 15 12.625C15 12.395 14.941 12.167 14.831 11.965ZM13.625 13H2.375C2.168 13 2 12.832 2 12.625C2 12.561 2.016 12.5 2.046 12.445L7.671 2.195C7.736 2.075 7.863 2 8 2C8.137 2 8.264 2.075 8.329 2.195L13.954 12.445C13.984 12.501 14 12.561 14 12.625C14 12.832 13.832 13 13.625 13ZM8.75 11.25C8.75 11.664 8.414 12 8 12C7.586 12 7.25 11.664 7.25 11.25C7.25 10.836 7.586 10.5 8 10.5C8.414 10.5 8.75 10.836 8.75 11.25ZM7.5 9V5.5C7.5 5.224 7.724 5 8 5C8.276 5 8.5 5.224 8.5 5.5V9C8.5 9.276 8.276 9.5 8 9.5C7.724 9.5 7.5 9.276 7.5 9Z\"/>",
+  "info": "<path d=\"M8.49902 7.49998C8.49902 7.22384 8.27517 6.99998 7.99902 6.99998C7.72288 6.99998 7.49902 7.22384 7.49902 7.49998V10.5C7.49902 10.7761 7.72288 11 7.99902 11C8.27517 11 8.49902 10.7761 8.49902 10.5V7.49998ZM8.74807 5.50001C8.74807 5.91369 8.41271 6.24905 7.99903 6.24905C7.58535 6.24905 7.25 5.91369 7.25 5.50001C7.25 5.08633 7.58535 4.75098 7.99903 4.75098C8.41271 4.75098 8.74807 5.08633 8.74807 5.50001ZM8 1C4.13401 1 1 4.13401 1 8C1 11.866 4.13401 15 8 15C11.866 15 15 11.866 15 8C15 4.13401 11.866 1 8 1ZM2 8C2 4.68629 4.68629 2 8 2C11.3137 2 14 4.68629 14 8C14 11.3137 11.3137 14 8 14C4.68629 14 2 11.3137 2 8Z\"/>",
+  "pass": "<path d=\"M10.6484 5.64648C10.8434 5.45148 11.1605 5.45148 11.3555 5.64648C11.5498 5.84137 11.5499 6.15766 11.3555 6.35254L7.35547 10.3525C7.25747 10.4495 7.12898 10.499 7.00098 10.499C6.87299 10.499 6.74545 10.4505 6.64746 10.3525L4.64746 8.35254C4.45247 8.15754 4.45248 7.84148 4.64746 7.64648C4.84246 7.45148 5.15949 7.45148 5.35449 7.64648L7 9.29199L10.6465 5.64648H10.6484Z\"/><path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M8 1C11.86 1 15 4.14 15 8C15 11.86 11.86 15 8 15C4.14 15 1 11.86 1 8C1 4.14 4.14 1 8 1ZM8 2C4.691 2 2 4.691 2 8C2 11.309 4.691 14 8 14C11.309 14 14 11.309 14 8C14 4.691 11.309 2 8 2Z\"/>",
+  "source-control": "<path d=\"M21 8.25C21 6.1815 19.3185 4.5 17.25 4.5C15.1815 4.5 13.5 6.1815 13.5 8.25C13.5 10.023 14.739 11.5035 16.395 11.892C16.116 12.819 15.2655 13.5 14.25 13.5H9.75C8.9025 13.5 8.1285 13.7925 7.5 14.268V7.4235C9.21 7.0755 10.5 5.5605 10.5 3.75C10.5 1.6815 8.8185 0 6.75 0C4.6815 0 3 1.6815 3 3.75C3 5.562 4.29 7.0755 6 7.4235V16.575C4.29 16.923 3 18.438 3 20.2485C3 22.317 4.6815 23.9985 6.75 23.9985C8.8185 23.9985 10.5 22.317 10.5 20.2485C10.5 18.4755 9.261 16.995 7.605 16.6065C7.884 15.6795 8.7345 14.9985 9.75 14.9985H14.25C16.0845 14.9985 17.61 13.6725 17.931 11.9295C19.674 11.607 21 10.0845 21 8.25ZM4.5 3.75C4.5 2.5095 5.5095 1.5 6.75 1.5C7.9905 1.5 9 2.5095 9 3.75C9 4.9905 7.9905 6 6.75 6C5.5095 6 4.5 4.9905 4.5 3.75ZM9 20.25C9 21.4905 7.9905 22.5 6.75 22.5C5.5095 22.5 4.5 21.4905 4.5 20.25C4.5 19.0095 5.5095 18 6.75 18C7.9905 18 9 19.0095 9 20.25ZM17.25 10.5C16.0095 10.5 15 9.4905 15 8.25C15 7.0095 16.0095 6 17.25 6C18.4905 6 19.5 7.0095 19.5 8.25C19.5 9.4905 18.4905 10.5 17.25 10.5Z\"/>",
+  "git-branch": "<path d=\"M14 5.5C14 4.121 12.879 3 11.5 3C10.121 3 9 4.121 9 5.5C9 6.682 9.826 7.669 10.93 7.928C10.744 8.546 10.177 9 9.5 9H6.5C5.935 9 5.419 9.195 5 9.512V4.949C6.14 4.717 7 3.707 7 2.5C7 1.121 5.879 0 4.5 0C3.121 0 2 1.121 2 2.5C2 3.708 2.86 4.717 4 4.949V11.05C2.86 11.282 2 12.292 2 13.499C2 14.878 3.121 15.999 4.5 15.999C5.879 15.999 7 14.878 7 13.499C7 12.317 6.174 11.33 5.07 11.071C5.256 10.453 5.823 9.999 6.5 9.999H9.5C10.723 9.999 11.74 9.115 11.954 7.953C13.116 7.738 14 6.723 14 5.5ZM3 2.5C3 1.673 3.673 1 4.5 1C5.327 1 6 1.673 6 2.5C6 3.327 5.327 4 4.5 4C3.673 4 3 3.327 3 2.5ZM6 13.5C6 14.327 5.327 15 4.5 15C3.673 15 3 14.327 3 13.5C3 12.673 3.673 12 4.5 12C5.327 12 6 12.673 6 13.5ZM11.5 7C10.673 7 10 6.327 10 5.5C10 4.673 10.673 4 11.5 4C12.327 4 13 4.673 13 5.5C13 6.327 12.327 7 11.5 7Z\"/>",
+  "git-merge": "<path d=\"M11.5 5.99998C10.9265 6.00006 10.3704 6.19736 9.92505 6.55877C9.47971 6.92018 9.17217 7.42373 9.05402 7.98498C7.17202 7.85998 5.46602 6.96298 5.08102 5.93098C5.67998 5.78724 6.20478 5.42744 6.55479 4.92058C6.9048 4.41373 7.05538 3.7955 6.97763 3.18446C6.89989 2.57343 6.5993 2.0126 6.13352 1.60954C5.66774 1.20648 5.06956 0.989562 4.45369 1.00039C3.83782 1.01121 3.24763 1.24902 2.7963 1.6682C2.34497 2.08738 2.06428 2.65842 2.00806 3.27181C1.95184 3.8852 2.12404 4.49776 2.49165 4.992C2.85925 5.48624 3.39638 5.82737 4.00002 5.94998V10.05C3.393 10.1739 2.85361 10.5188 2.48642 11.0178C2.11923 11.5168 1.95041 12.1343 2.01268 12.7507C2.07495 13.3671 2.36387 13.9385 2.82344 14.3539C3.28301 14.7694 3.88048 14.9995 4.50002 14.9995C5.11956 14.9995 5.71703 14.7694 6.1766 14.3539C6.63616 13.9385 6.92509 13.3671 6.98736 12.7507C7.04963 12.1343 6.88081 11.5168 6.51362 11.0178C6.14643 10.5188 5.60704 10.1739 5.00002 10.05V7.46598C6.15462 8.38805 7.57188 8.92022 9.04802 8.98598C9.1401 9.4506 9.36227 9.8795 9.68867 10.2227C10.0151 10.566 10.4323 10.8094 10.8917 10.9248C11.3511 11.0401 11.8338 11.0225 12.2836 10.8741C12.7334 10.7257 13.1318 10.4526 13.4324 10.0865C13.733 9.72047 13.9234 9.27655 13.9815 8.80647C14.0395 8.33639 13.9629 7.85948 13.7604 7.43128C13.5579 7.00308 13.238 6.64122 12.8378 6.38782C12.4376 6.13442 11.9737 5.99992 11.5 5.99998ZM3.00002 3.49998C3.00002 3.20331 3.08799 2.9133 3.25282 2.66662C3.41764 2.41995 3.65191 2.22769 3.92599 2.11416C4.20008 2.00063 4.50168 1.97092 4.79265 2.0288C5.08363 2.08668 5.3509 2.22954 5.56068 2.43932C5.77046 2.6491 5.91332 2.91637 5.9712 3.20734C6.02908 3.49831 5.99937 3.79991 5.88584 4.074C5.77231 4.34809 5.58005 4.58236 5.33337 4.74718C5.0867 4.912 4.79669 4.99998 4.50002 4.99998C4.10219 4.99998 3.72066 4.84194 3.43936 4.56064C3.15805 4.27933 3.00002 3.8978 3.00002 3.49998ZM6.00002 12.5C6.00002 12.7966 5.91205 13.0867 5.74722 13.3333C5.5824 13.58 5.34813 13.7723 5.07404 13.8858C4.79996 13.9993 4.49836 14.029 4.20738 13.9712C3.91641 13.9133 3.64914 13.7704 3.43936 13.5606C3.22958 13.3509 3.08672 13.0836 3.02884 12.7926C2.97096 12.5016 3.00067 12.2 3.1142 11.926C3.22773 11.6519 3.41999 11.4176 3.66666 11.2528C3.91334 11.088 4.20335 11 4.50002 11C4.89784 11 5.27938 11.158 5.56068 11.4393C5.84198 11.7206 6.00002 12.1022 6.00002 12.5ZM11.5 9.99998C11.2033 9.99998 10.9133 9.91201 10.6667 9.74718C10.42 9.58236 10.2277 9.34809 10.1142 9.074C10.0007 8.79991 9.97096 8.49831 10.0288 8.20734C10.0867 7.91637 10.2296 7.6491 10.4394 7.43932C10.6491 7.22954 10.9164 7.08668 11.2074 7.0288C11.4984 6.97092 11.8 7.00063 12.074 7.11416C12.3481 7.22769 12.5824 7.41995 12.7472 7.66662C12.912 7.9133 13 8.20331 13 8.49998C13 8.8978 12.842 9.27933 12.5607 9.56064C12.2794 9.84194 11.8978 9.99998 11.5 9.99998Z\"/>",
+  "git-pull-request": "<path d=\"M13 10.05V5.5C13 4.12 11.88 3 10.5 3H8.71L9.85 1.85C10.05 1.66 10.05 1.34 9.85 1.15C9.66 0.95 9.34 0.95 9.15 1.15L7.15 3.15C6.95 3.34 6.95 3.66 7.15 3.85L9.15 5.85C9.34 6.05 9.66 6.05 9.85 5.85C10.05 5.66 10.05 5.34 9.85 5.15L8.71 4H10.5C11.33 4 12 4.67 12 5.5V10.05C10.86 10.28 10 11.29 10 12.5C10 13.88 11.12 15 12.5 15C13.88 15 15 13.88 15 12.5C15 11.29 14.14 10.28 13 10.05ZM12.5 14C11.67 14 11 13.33 11 12.5C11 11.67 11.67 11 12.5 11C13.33 11 14 11.67 14 12.5C14 13.33 13.33 14 12.5 14ZM6 3.5C6 2.12 4.88 1 3.5 1C2.12 1 1 2.12 1 3.5C1 4.71 1.86 5.72 3 5.95V10.051C1.86 10.283 1 11.293 1 12.5C1 13.879 2.122 15 3.5 15C4.878 15 6 13.879 6 12.5C6 11.292 5.14 10.283 4 10.051V5.95C5.14 5.72 6 4.71 6 3.5ZM2 3.5C2 2.67 2.67 2 3.5 2C4.33 2 5 2.67 5 3.5C5 4.33 4.33 5 3.5 5C2.67 5 2 4.33 2 3.5ZM5 12.5C5 13.327 4.327 14 3.5 14C2.673 14 2 13.327 2 12.5C2 11.673 2.673 11 3.5 11C4.327 11 5 11.673 5 12.5Z\"/>",
+  "comment": "<path d=\"M1 4.5C1 3.11929 2.11929 2 3.5 2H12.5C13.8807 2 15 3.11929 15 4.5V9.5C15 10.8807 13.8807 12 12.5 12H8.68787L5.62533 14.6797C4.99168 15.2342 4 14.7842 4 13.9422V12H3.5C2.11929 12 1 10.8807 1 9.5V4.5ZM3.5 3C2.67157 3 2 3.67157 2 4.5V9.5C2 10.3284 2.67157 11 3.5 11H5V13.8981L8.31213 11H12.5C13.3284 11 14 10.3284 14 9.5V4.5C14 3.67157 13.3284 3 12.5 3H3.5Z\"/>",
+  "check": "<path d=\"M13.6572 3.13573C13.8583 2.9465 14.175 2.95614 14.3643 3.15722C14.5535 3.35831 14.5438 3.675 14.3428 3.86425L5.84277 11.8642C5.64597 12.0494 5.33756 12.0446 5.14648 11.8535L1.64648 8.35351C1.45121 8.15824 1.45121 7.84174 1.64648 7.64647C1.84174 7.45121 2.15825 7.45121 2.35351 7.64647L5.50976 10.8027L13.6572 3.13573Z\"/>",
+  "chevron-right": "<path d=\"M6.14601 3.14579C5.95101 3.34079 5.95101 3.65779 6.14601 3.85279L10.292 7.99879L6.14601 12.1448C5.95101 12.3398 5.95101 12.6568 6.14601 12.8518C6.34101 13.0468 6.65801 13.0468 6.85301 12.8518L11.353 8.35179C11.548 8.15679 11.548 7.83979 11.353 7.64478L6.85301 3.14479C6.65801 2.94979 6.34101 2.95079 6.14601 3.14579Z\"/>",
+  "chevron-down": "<path d=\"M3.14598 5.85423L7.64598 10.3542C7.84098 10.5492 8.15798 10.5492 8.35298 10.3542L12.853 5.85423C13.048 5.65923 13.048 5.34223 12.853 5.14723C12.658 4.95223 12.341 4.95223 12.146 5.14723L7.99998 9.29323L3.85398 5.14723C3.65898 4.95223 3.34198 4.95223 3.14698 5.14723C2.95198 5.34223 2.95098 5.65923 3.14598 5.85423Z\"/>",
+  "chevron-up": "<path d=\"M3.14603 9.85423C3.34103 10.0492 3.65803 10.0492 3.85303 9.85423L7.99903 5.70823L12.145 9.85423C12.34 10.0492 12.657 10.0492 12.852 9.85423C13.047 9.65923 13.047 9.34223 12.852 9.14723L8.35203 4.64723C8.15703 4.45223 7.84003 4.45223 7.64503 4.64723L3.14503 9.14723C2.95003 9.34223 2.95103 9.65923 3.14603 9.85423Z\"/>",
+  "close": "<path d=\"M13.85 13.1502C14.05 13.3502 14.05 13.6602 13.85 13.8602C13.75 13.9602 13.62 14.0102 13.5 14.0102C13.38 14.0102 13.24 13.9602 13.15 13.8602L8 8.71023L2.85 13.8602C2.75 13.9602 2.62 14.0102 2.5 14.0102C2.38 14.0102 2.24 13.9602 2.15 13.8602C1.95 13.6602 1.95 13.3502 2.15 13.1502L7.3 8.00023L2.15 2.85023C1.95 2.65023 1.95 2.34023 2.15 2.14023C2.35 1.94023 2.66 1.94023 2.86 2.14023L8.01 7.29023L13.16 2.14023C13.36 1.94023 13.67 1.94023 13.87 2.14023C14.07 2.34023 14.07 2.65023 13.87 2.85023L8.72 8.00023L13.87 13.1502H13.85Z\"/>",
+  "eye": "<path d=\"M2.98444 8.62471L2.98346 8.62815C2.91251 8.8948 2.63879 9.05404 2.37202 8.9833C1.94098 8.86907 2.01687 8.37186 2.01687 8.37186L2.03453 8.31047C2.03453 8.31047 2.06063 8.22636 2.08166 8.1653C2.12369 8.04329 2.18795 7.87274 2.27931 7.66977C2.46154 7.26493 2.75443 6.72477 3.19877 6.18295C4.09629 5.08851 5.60509 4 8.00017 4C10.3952 4 11.904 5.08851 12.8016 6.18295C13.2459 6.72477 13.5388 7.26493 13.721 7.66977C13.8124 7.87274 13.8766 8.04329 13.9187 8.1653C13.9397 8.22636 13.9552 8.27541 13.9658 8.31047C13.9711 8.328 13.9752 8.34204 13.9781 8.35236L13.9816 8.365L13.9827 8.36916L13.9832 8.37069L13.9835 8.37186C14.0542 8.63878 13.8952 8.91253 13.6283 8.9833C13.3618 9.05397 13.0885 8.89556 13.0172 8.62937L13.0169 8.62815L13.0159 8.62471L13.0085 8.5997C13.0014 8.57616 12.9898 8.53927 12.9732 8.49095C12.9399 8.39422 12.8866 8.25227 12.8091 8.08023C12.6538 7.73508 12.4041 7.27523 12.0283 6.81706C11.2857 5.9115 10.0445 5 8.00017 5C5.95584 5 4.71464 5.9115 3.97201 6.81706C3.59627 7.27523 3.34655 7.73508 3.19119 8.08023C3.11375 8.25227 3.06047 8.39422 3.02715 8.49095C3.01051 8.53927 2.9989 8.57616 2.99179 8.5997L2.98444 8.62471ZM8.00024 7C6.61953 7 5.50024 8.11929 5.50024 9.5C5.50024 10.8807 6.61953 12 8.00024 12C9.38096 12 10.5002 10.8807 10.5002 9.5C10.5002 8.11929 9.38096 7 8.00024 7ZM6.50024 9.5C6.50024 8.67157 7.17182 8 8.00024 8C8.82867 8 9.50024 8.67157 9.50024 9.5C9.50024 10.3284 8.82867 11 8.00024 11C7.17182 11 6.50024 10.3284 6.50024 9.5Z\"/>",
+  "eye-closed": "<path d=\"M10.1196 10.8267L14.1464 14.8536C14.3417 15.0488 14.6583 15.0488 14.8536 14.8536C15.0488 14.6583 15.0488 14.3417 14.8536 14.1464L1.85355 1.14645C1.65829 0.951184 1.34171 0.951184 1.14645 1.14645C0.951184 1.34171 0.951184 1.65829 1.14645 1.85355L4.37624 5.08334C3.90117 5.4183 3.5126 5.80026 3.19877 6.18295C2.75443 6.72477 2.46154 7.26493 2.27931 7.66977C2.18795 7.87274 2.12369 8.04329 2.08166 8.1653C2.06063 8.22636 2.03453 8.31047 2.03453 8.31047L2.01687 8.37186C2.01687 8.37186 1.94098 8.86907 2.37202 8.9833C2.63879 9.05404 2.91251 8.8948 2.98346 8.62815L2.98444 8.62471L2.99179 8.5997C2.9989 8.57616 3.01051 8.53927 3.02715 8.49095C3.06047 8.39421 3.11375 8.25227 3.19119 8.08023C3.34655 7.73507 3.59627 7.27523 3.97201 6.81706C4.26363 6.46146 4.63213 6.10494 5.09595 5.80306L6.67356 7.38067C5.9688 7.82277 5.50024 8.60667 5.50024 9.5C5.50024 10.8807 6.61953 12 8.00024 12C8.89358 12 9.67747 11.5314 10.1196 10.8267ZM9.3807 10.0878C9.15205 10.6241 8.62005 11 8.00024 11C7.17182 11 6.50024 10.3284 6.50024 9.5C6.50024 8.88019 6.87616 8.34819 7.41244 8.11955L9.3807 10.0878ZM6.31962 4.19853L7.174 5.05291C7.43366 5.01852 7.70875 5 8.00017 5C10.0445 5 11.2857 5.9115 12.0283 6.81706C12.4041 7.27523 12.6538 7.73507 12.8091 8.08023C12.8866 8.25227 12.9399 8.39421 12.9732 8.49095C12.9898 8.53927 13.0014 8.57616 13.0085 8.5997L13.0159 8.62471L13.0169 8.62815L13.0172 8.62937C13.0885 8.89555 13.3618 9.05397 13.6283 8.9833C13.8952 8.91253 14.0542 8.63878 13.9835 8.37186L13.9832 8.37069L13.9827 8.36916L13.9816 8.365L13.9781 8.35236C13.9752 8.34204 13.9711 8.328 13.9658 8.31047C13.9552 8.27541 13.9397 8.22636 13.9187 8.1653C13.8766 8.04329 13.8124 7.87274 13.721 7.66977C13.5388 7.26493 13.2459 6.72477 12.8016 6.18295C11.904 5.0885 10.3952 4 8.00017 4C7.38264 4 6.82403 4.07236 6.31962 4.19853Z\"/>",
+  "copy": "<path d=\"M3 5V12.73C2.4 12.38 2 11.74 2 11V5C2 2.79 3.79 1 6 1H9C9.74 1 10.38 1.4 10.73 2H6C4.35 2 3 3.35 3 5ZM11 15H6C4.897 15 4 14.103 4 13V5C4 3.897 4.897 3 6 3H11C12.103 3 13 3.897 13 5V13C13 14.103 12.103 15 11 15ZM12 5C12 4.448 11.552 4 11 4H6C5.448 4 5 4.448 5 5V13C5 13.552 5.448 14 6 14H11C11.552 14 12 13.552 12 13V5Z\"/>",
+  "split-horizontal": "<path d=\"M12.5 1H3.5C2.122 1 1 2.122 1 3.5V12.5C1 13.878 2.122 15 3.5 15H12.5C13.878 15 15 13.878 15 12.5V3.5C15 2.122 13.878 1 12.5 1ZM2 12.5V3.5C2 2.673 2.673 2 3.5 2H7.5V14H3.5C2.673 14 2 13.327 2 12.5ZM14 12.5C14 13.327 13.327 14 12.5 14H8.5V2H12.5C13.327 2 14 2.673 14 3.5V12.5Z\"/>",
+  "list-flat": "<path d=\"M2 3.5C2 3.224 2.224 3 2.5 3H10.5C10.776 3 11 3.224 11 3.5C11 3.776 10.776 4 10.5 4H2.5C2.224 4 2 3.776 2 3.5ZM13.5 6H2.5C2.224 6 2 6.224 2 6.5C2 6.776 2.224 7 2.5 7H13.5C13.776 7 14 6.776 14 6.5C14 6.224 13.776 6 13.5 6ZM9.5 9H2.5C2.224 9 2 9.224 2 9.5C2 9.776 2.224 10 2.5 10H9.5C9.776 10 10 9.776 10 9.5C10 9.224 9.776 9 9.5 9Z\"/><path d=\"M2.5 12H11.5C11.776 12 12 12.224 12 12.5C12 12.776 11.776 13 11.5 13H2.5C2.224 13 2 12.776 2 12.5C2 12.224 2.224 12 2.5 12Z\"/>",
+  "go-to-file": "<path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M8.58594 1.00098C8.98394 1.00098 9.36646 1.15943 9.64746 1.44043L12.5605 4.35352C12.8415 4.63552 13.001 5.01704 13.001 5.41504V13.001C13.001 14.106 12.106 15.001 11.001 15.001H5.00098C3.89599 15.001 3.00098 14.106 3.00098 13.001V6.00098H4.00098V13.001C4.00098 13.553 4.44899 14.001 5.00098 14.001H11.001C11.553 14.001 12.001 13.553 12.001 13.001V6.00098H9.50098C8.67299 6.00096 8.00098 5.32897 8.00098 4.50098V2.00098C7.99198 1.97699 7.98265 1.9527 7.97266 1.92871C7.89674 1.74704 7.78717 1.5812 7.64746 1.44238L7.20605 1.00098H8.58594ZM9 4.5C9 4.776 9.224 5 9.5 5H11.793L9 2.20703V4.5Z\"/><path d=\"M4.5 0C4.63299 0 4.75952 0.0534683 4.85352 0.147461L6.85352 2.14746C6.90042 2.19336 6.93789 2.24775 6.96289 2.30859C6.98789 2.36959 7.00097 2.43498 7.00098 2.50098C7.00098 2.56698 6.98789 2.63236 6.96289 2.69336C6.93789 2.75323 6.90043 2.80956 6.85352 2.85547L4.85352 4.85547C4.75956 4.94917 4.63278 5.00195 4.5 5.00195C4.36722 5.00195 4.24044 4.94917 4.14648 4.85547C4.05248 4.76147 3.99902 4.63398 3.99902 4.50098C3.99903 4.36799 4.05249 4.24146 4.14648 4.14746L5.29297 3.00098H2.5C2.10201 3.00098 1.72045 3.15944 1.43945 3.44043C1.15846 3.72242 1.00001 4.10298 1 4.50098V5.50098C1 5.63398 0.947516 5.76147 0.853516 5.85547C0.759563 5.94817 0.632774 6.00098 0.5 6.00098C0.367225 6.00098 0.240437 5.94917 0.146484 5.85547C0.0534844 5.76147 0 5.63398 0 5.50098V4.50098C6.17892e-06 3.83799 0.263427 3.20239 0.732422 2.7334C1.20142 2.26441 1.83701 2.00098 2.5 2.00098H5.29297L4.14648 0.855469C4.05248 0.761469 3.99902 0.633977 3.99902 0.500977C3.99903 0.367985 4.05249 0.241455 4.14648 0.147461C4.24048 0.0534683 4.36701 0 4.5 0Z\"/>",
+  "circle-filled": "<path d=\"M8 4C8.36719 4 8.72135 4.04818 9.0625 4.14453C9.40365 4.23828 9.72135 4.3724 10.0156 4.54688C10.3125 4.72135 10.582 4.93099 10.8242 5.17578C11.069 5.41797 11.2786 5.6875 11.4531 5.98438C11.6276 6.27865 11.7617 6.59635 11.8555 6.9375C11.9518 7.27865 12 7.63281 12 8C12 8.36719 11.9518 8.72135 11.8555 9.0625C11.7617 9.40365 11.6276 9.72266 11.4531 10.0195C11.2786 10.3138 11.069 10.5833 10.8242 10.8281C10.582 11.0703 10.3125 11.2786 10.0156 11.4531C9.72135 11.6276 9.40365 11.763 9.0625 11.8594C8.72135 11.9531 8.36719 12 8 12C7.63281 12 7.27865 11.9531 6.9375 11.8594C6.59635 11.763 6.27734 11.6276 5.98047 11.4531C5.6862 11.2786 5.41667 11.0703 5.17188 10.8281C4.92969 10.5833 4.72135 10.3138 4.54688 10.0195C4.3724 9.72266 4.23698 9.40365 4.14062 9.0625C4.04688 8.72135 4 8.36719 4 8C4 7.63281 4.04688 7.27865 4.14062 6.9375C4.23698 6.59635 4.3724 6.27865 4.54688 5.98438C4.72135 5.6875 4.92969 5.41797 5.17188 5.17578C5.41667 4.93099 5.6862 4.72135 5.98047 4.54688C6.27734 4.3724 6.59635 4.23828 6.9375 4.14453C7.27865 4.04818 7.63281 4 8 4Z\"/>",
+  "circle-slash": "<path d=\"M11.8746 3.41833C9.51718 1.42026 5.98144 1.53327 3.75736 3.75736C1.53327 5.98144 1.42026 9.51719 3.41833 11.8746L11.8746 3.41833ZM12.5817 4.12543L4.12543 12.5817C6.48282 14.5797 10.0186 14.4667 12.2426 12.2426C14.4667 10.0186 14.5797 6.48282 12.5817 4.12543ZM3.05025 3.05025C5.78392 0.316582 10.2161 0.316582 12.9497 3.05025C15.6834 5.78392 15.6834 10.2161 12.9497 12.9497C10.2161 15.6834 5.78392 15.6834 3.05025 12.9497C0.316583 10.2161 0.316582 5.78392 3.05025 3.05025Z\"/>",
+  "book": "<path d=\"M2.5 2C1.67157 2 1 2.67157 1 3.5V12.5C1 13.3284 1.67157 14 2.5 14H6C6.8178 14 7.54389 13.6073 8 13.0002C8.45612 13.6073 9.1822 14 10 14H13.5C14.3284 14 15 13.3284 15 12.5V3.5C15 2.67157 14.3284 2 13.5 2H10C9.1822 2 8.45612 2.39267 8 2.99976C7.54389 2.39267 6.8178 2 6 2H2.5ZM7.5 4.5V11.5C7.5 12.3284 6.82843 13 6 13H2.5C2.22386 13 2 12.7761 2 12.5V3.5C2 3.22386 2.22386 3 2.5 3H6C6.82843 3 7.5 3.67157 7.5 4.5ZM8.5 11.5V4.5C8.5 3.67157 9.17157 3 10 3H13.5C13.7761 3 14 3.22386 14 3.5V12.5C14 12.7761 13.7761 13 13.5 13H10C9.17157 13 8.5 12.3284 8.5 11.5Z\"/>",
+  "beaker": "<path d=\"M12 0.998993C12.276 0.998993 12.5 1.22299 12.5 1.49899C12.5 1.77499 12.276 1.99899 12 1.99899H11.004V6.68299C11.004 7.26299 11.148 7.83299 11.423 8.34299L13.819 12.789C14.358 13.788 13.634 15.001 12.499 15.001H3.50101C2.36501 15.001 1.64301 13.788 2.18101 12.789L4.57501 8.34499C4.85001 7.83499 4.99401 7.26399 4.99401 6.68499V1.99899H4.00001C3.72401 1.99899 3.50001 1.77499 3.50001 1.49899C3.50001 1.22299 3.72401 0.998993 4.00001 0.998993H12ZM5.99401 1.99899V6.68599C5.99401 7.43099 5.80901 8.16399 5.45601 8.81999L4.82101 9.99899H11.18L10.543 8.81699C10.19 8.16099 10.005 7.42799 10.005 6.68199V1.99899H5.99401ZM11.718 10.999H4.28201L3.06201 13.263C2.88201 13.597 3.12401 14 3.50201 14H12.499C12.877 14 13.119 13.596 12.939 13.263L11.718 10.999Z\"/>",
+  "history": "<path d=\"M7.99909 3C10.7605 3 12.9991 5.23858 12.9991 8C12.9991 10.7614 10.7605 13 7.99909 13C5.39117 13 3.2491 11.003 3.0195 8.45512C2.99471 8.1801 2.75167 7.97723 2.47664 8.00202C2.20161 8.0268 1.99875 8.26985 2.02353 8.54488C2.29916 11.6035 4.86898 14 7.99909 14C11.3128 14 13.9991 11.3137 13.9991 8C13.9991 4.68629 11.3128 2 7.99909 2C6.20656 2 4.59815 2.78613 3.49909 4.03138V2.5C3.49909 2.22386 3.27524 2 2.99909 2C2.72295 2 2.49909 2.22386 2.49909 2.5V5.5C2.49909 5.77614 2.72295 6 2.99909 6H3.08812C3.09498 6.00014 3.10184 6.00014 3.10868 6H5.99909C6.27524 6 6.49909 5.77614 6.49909 5.5C6.49909 5.22386 6.27524 5 5.99909 5H3.99863C4.91128 3.78495 6.36382 3 7.99909 3ZM7.99909 5.5C7.99909 5.22386 7.77524 5 7.49909 5C7.22295 5 6.99909 5.22386 6.99909 5.5V8.5C6.99909 8.77614 7.22295 9 7.49909 9H9.49909C9.77524 9 9.99909 8.77614 9.99909 8.5C9.99909 8.22386 9.77524 8 9.49909 8H7.99909V5.5Z\"/>",
+  "file": "<path d=\"M5 1C3.89543 1 3 1.89543 3 3V13C3 14.1046 3.89543 15 5 15H11C12.1046 15 13 14.1046 13 13V5.41421C13 5.01639 12.842 4.63486 12.5607 4.35355L9.64645 1.43934C9.36514 1.15804 8.98361 1 8.58579 1H5ZM4 3C4 2.44772 4.44772 2 5 2H8V4.5C8 5.32843 8.67157 6 9.5 6H12V13C12 13.5523 11.5523 14 11 14H5C4.44772 14 4 13.5523 4 13V3ZM11.7929 5H9.5C9.22386 5 9 4.77614 9 4.5V2.20711L11.7929 5Z\"/>",
+  "arrow-right": "<path d=\"M13.854 8.14576L8.854 3.14576C8.659 2.95076 8.342 2.95076 8.147 3.14576C7.952 3.34076 7.952 3.65776 8.147 3.85276L12.293 7.99876H2.5C2.224 7.99876 2 8.22276 2 8.49876C2 8.77476 2.224 8.99876 2.5 8.99876H12.293L8.147 13.1448C7.952 13.3398 7.952 13.6568 8.147 13.8518C8.245 13.9498 8.373 13.9978 8.501 13.9978C8.629 13.9978 8.757 13.9488 8.855 13.8518L13.855 8.85176C14.05 8.65676 14.05 8.33976 13.855 8.14476L13.854 8.14576Z\"/>",
+  "screen-full": "<path d=\"M3.75 3C3.33579 3 3 3.33579 3 3.75V5.5C3 5.77614 2.77614 6 2.5 6C2.22386 6 2 5.77614 2 5.5V3.75C2 2.7835 2.7835 2 3.75 2H5.5C5.77614 2 6 2.22386 6 2.5C6 2.77614 5.77614 3 5.5 3H3.75ZM10 2.5C10 2.22386 10.2239 2 10.5 2H12.25C13.2165 2 14 2.7835 14 3.75V5.5C14 5.77614 13.7761 6 13.5 6C13.2239 6 13 5.77614 13 5.5V3.75C13 3.33579 12.6642 3 12.25 3H10.5C10.2239 3 10 2.77614 10 2.5ZM2.5 10C2.77614 10 3 10.2239 3 10.5V12.25C3 12.6642 3.33579 13 3.75 13H5.5C5.77614 13 6 13.2239 6 13.5C6 13.7761 5.77614 14 5.5 14H3.75C2.7835 14 2 13.2165 2 12.25V10.5C2 10.2239 2.22386 10 2.5 10ZM13.5 10C13.7761 10 14 10.2239 14 10.5V12.25C14 13.2165 13.2165 14 12.25 14H10.5C10.2239 14 10 13.7761 10 13.5C10 13.2239 10.2239 13 10.5 13H12.25C12.6642 13 13 12.6642 13 12.25V10.5C13 10.2239 13.2239 10 13.5 10Z\"/>",
+  "screen-normal": "<path d=\"M11 4C11 4.55228 11.4477 5 12 5H13.5C13.7761 5 14 5.22386 14 5.5C14 5.77614 13.7761 6 13.5 6H12C10.8954 6 10 5.10457 10 4V2.5C10 2.22386 10.2239 2 10.5 2C10.7761 2 11 2.22386 11 2.5V4ZM11 12C11 11.4477 11.4477 11 12 11H13.5C13.7761 11 14 10.7761 14 10.5C14 10.2239 13.7761 10 13.5 10H12C10.8954 10 10 10.8954 10 12V13.5C10 13.7761 10.2239 14 10.5 14C10.7761 14 11 13.7761 11 13.5V12ZM4 11C4.55228 11 5 11.4477 5 12V13.5C5 13.7761 5.22386 14 5.5 14C5.77614 14 6 13.7761 6 13.5V12C6 10.8954 5.10457 10 4 10H2.5C2.22386 10 2 10.2239 2 10.5C2 10.7761 2.22386 11 2.5 11H4ZM5 4C5 4.55228 4.55228 5 4 5H2.5C2.22386 5 2 5.22386 2 5.5C2 5.77614 2.22386 6 2.5 6H4C5.10457 6 6 5.10457 6 4V2.5C6 2.22386 5.77614 2 5.5 2C5.22386 2 5 2.22386 5 2.5V4Z\"/>",
+  "account": "<path d=\"M6 5C6 3.89543 6.89543 3 8 3C9.10457 3 10 3.89543 10 5C10 6.10457 9.10457 7 8 7C6.89543 7 6 6.10457 6 5ZM5.49998 8L10.5 8C11.3284 8 12 8.67157 12 9.5C12 10.6161 11.541 11.5103 10.7879 12.1148C10.0466 12.7098 9.05308 13 8 13C6.94692 13 5.95342 12.7098 5.21215 12.1148C4.45897 11.5103 4 10.6161 4 9.5C4 8.67161 4.67156 8 5.49998 8ZM8 0C3.58172 0 0 3.58172 0 8C0 12.4183 3.58172 16 8 16C12.4183 16 16 12.4183 16 8C16 3.58172 12.4183 0 8 0ZM1 8C1 4.13401 4.13401 1 8 1C11.866 1 15 4.13401 15 8C15 11.866 11.866 15 8 15C4.13401 15 1 11.866 1 8Z\"/>",
+  "edit": "<path d=\"M14.236 1.76386C13.2123 0.740172 11.5525 0.740171 10.5289 1.76386L2.65722 9.63549C2.28304 10.0097 2.01623 10.4775 1.88467 10.99L1.01571 14.3755C0.971767 14.5467 1.02148 14.7284 1.14646 14.8534C1.27144 14.9783 1.45312 15.028 1.62432 14.9841L5.00978 14.1151C5.52234 13.9836 5.99015 13.7168 6.36433 13.3426L14.236 5.47097C15.2596 4.44728 15.2596 2.78755 14.236 1.76386ZM11.236 2.47097C11.8691 1.8378 12.8957 1.8378 13.5288 2.47097C14.162 3.10413 14.162 4.1307 13.5288 4.76386L12.75 5.54269L10.4571 3.24979L11.236 2.47097ZM9.75002 3.9569L12.0429 6.24979L5.65722 12.6355C5.40969 12.883 5.10023 13.0595 4.76117 13.1465L2.19447 13.8053L2.85327 11.2386C2.9403 10.8996 3.1168 10.5901 3.36433 10.3426L9.75002 3.9569Z\"/>",
+  "lightbulb": "<path d=\"M8 1C5.419 1 2.75 2.964 2.75 6.25C2.75 8.167 3.637 9.184 4.224 9.856C4.408 10.067 4.598 10.285 4.628 10.398L5.568 13.889C5.744 14.543 6.34 14.999 7.017 14.999H8.984C9.662 14.999 10.257 14.542 10.432 13.889L11.372 10.397C11.402 10.285 11.593 10.067 11.776 9.856C12.363 9.183 13.25 8.167 13.25 6.25C13.25 3.355 10.895 1 8 1ZM9.467 13.63C9.408 13.848 9.209 14 8.984 14H7.017C6.791 14 6.593 13.848 6.534 13.63L6.095 12H9.906L9.467 13.63ZM11.022 9.199C10.741 9.522 10.497 9.802 10.407 10.137L10.175 10.999H5.826L5.594 10.138C5.503 9.801 5.26 9.522 4.977 9.199C4.43 8.572 3.75 7.792 3.75 6.25C3.75 3.59 5.911 2 8 2C10.344 2 12.25 3.907 12.25 6.25C12.25 7.792 11.569 8.572 11.022 9.199Z\"/>",
+  "issues": "<path d=\"M9 8C9 8.55228 8.55228 9 8 9C7.44772 9 7 8.55228 7 8C7 7.44772 7.44772 7 8 7C8.55228 7 9 7.44772 9 8Z\"/><path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M1 8C1 11.859 4.14 15 8 15C11.86 15 15 11.859 15 8C15 4.141 11.86 1 8 1C4.14 1 1 4.141 1 8ZM2 8C2 4.691 4.691 2 8 2C11.309 2 14 4.691 14 8C14 11.309 11.309 14 8 14C4.691 14 2 11.309 2 8Z\"/>",
+  "git-commit": "<path d=\"M11.5 8C11.5 6.24 10.194 4.779 8.5 4.536V1.5C8.5 1.224 8.276 1 8 1C7.724 1 7.5 1.224 7.5 1.5V4.536C5.806 4.779 4.5 6.24 4.5 8C4.5 9.76 5.806 11.221 7.5 11.464V14.5C7.5 14.776 7.724 15 8 15C8.276 15 8.5 14.776 8.5 14.5V11.464C10.194 11.221 11.5 9.76 11.5 8ZM8 10.5C6.621 10.5 5.5 9.378 5.5 8C5.5 6.622 6.621 5.5 8 5.5C9.379 5.5 10.5 6.622 10.5 8C10.5 9.378 9.379 10.5 8 10.5Z\"/>",
+  "diff-added": "<path d=\"M11.5 1H3.5C2.122 1 1 2.122 1 3.5V11.5C1 12.878 2.122 14 3.5 14H11.5C12.878 14 14 12.878 14 11.5V3.5C14 2.122 12.878 1 11.5 1ZM13 11.5C13 12.327 12.327 13 11.5 13H3.5C2.673 13 2 12.327 2 11.5V3.5C2 2.673 2.673 2 3.5 2H11.5C12.327 2 13 2.673 13 3.5V11.5ZM11 7.5C11 7.776 10.776 8 10.5 8H8V10.5C8 10.776 7.776 11 7.5 11C7.224 11 7 10.776 7 10.5V8H4.5C4.224 8 4 7.776 4 7.5C4 7.224 4.224 7 4.5 7H7V4.5C7 4.224 7.224 4 7.5 4C7.776 4 8 4.224 8 4.5V7H10.5C10.776 7 11 7.224 11 7.5Z\"/>",
+  "diff-modified": "<path d=\"M11 7.5C11 9.43 9.43 11 7.5 11C5.57 11 4 9.43 4 7.5C4 5.57 5.57 4 7.5 4C9.43 4 11 5.57 11 7.5ZM14 3.5V11.5C14 12.878 12.878 14 11.5 14H3.5C2.122 14 1 12.878 1 11.5V3.5C1 2.122 2.122 1 3.5 1H11.5C12.878 1 14 2.122 14 3.5ZM13 3.5C13 2.673 12.327 2 11.5 2H3.5C2.673 2 2 2.673 2 3.5V11.5C2 12.327 2.673 13 3.5 13H11.5C12.327 13 13 12.327 13 11.5V3.5Z\"/>",
+  "diff-removed": "<path d=\"M11.5 1H3.5C2.122 1 1 2.122 1 3.5V11.5C1 12.878 2.122 14 3.5 14H11.5C12.878 14 14 12.878 14 11.5V3.5C14 2.122 12.878 1 11.5 1ZM13 11.5C13 12.327 12.327 13 11.5 13H3.5C2.673 13 2 12.327 2 11.5V3.5C2 2.673 2.673 2 3.5 2H11.5C12.327 2 13 2.673 13 3.5V11.5ZM11 7.5C11 7.776 10.776 8 10.5 8H4.5C4.224 8 4 7.776 4 7.5C4 7.224 4.224 7 4.5 7H10.5C10.776 7 11 7.224 11 7.5Z\"/>",
+  "diff-renamed": "<path d=\"M11.5 1H3.5C2.122 1 1 2.122 1 3.5V11.5C1 12.878 2.122 14 3.5 14H11.5C12.878 14 14 12.878 14 11.5V3.5C14 2.122 12.878 1 11.5 1ZM13 11.5C13 12.327 12.327 13 11.5 13H3.5C2.673 13 2 12.327 2 11.5V3.5C2 2.673 2.673 2 3.5 2H11.5C12.327 2 13 2.673 13 3.5V11.5ZM10.854 7.146C11.049 7.341 11.049 7.658 10.854 7.853L8.854 9.853C8.756 9.951 8.628 9.999 8.5 9.999C8.372 9.999 8.244 9.95 8.146 9.853C7.951 9.658 7.951 9.341 8.146 9.146L9.292 8H4.499C4.223 8 3.999 7.776 3.999 7.5C3.999 7.224 4.223 7 4.499 7H9.292L8.146 5.854C7.951 5.659 7.951 5.342 8.146 5.147C8.341 4.952 8.658 4.952 8.853 5.147L10.853 7.147L10.854 7.146Z\"/>",
+};
+const TIER_GROUPS = [
+  { id: 'core', label: 'Core', hint: 'read first', tiers: ['core'] },
+  { id: 'supporting', label: 'Supporting', hint: '', tiers: ['supporting'] },
+  { id: 'tests', label: 'Tests & generated', hint: '', tiers: ['tests', 'generated'], collapsed: true },
+];
+const TIER_LABEL = { core: 'Core', supporting: 'Supporting', tests: 'Tests', generated: 'Generated' };
+const STATUS_LABEL = { A: 'Added', M: 'Modified', D: 'Deleted', R: 'Renamed' };
+const KIND_LABEL = { merge: 'merged', pr: 'pull request', branch: 'branch', range: 'range', worktree: 'working tree, not committed', fixes: 'fixes', commit: 'commit' };
+const SEVERITY_ICON = { high: 'error', medium: 'warning', low: 'info' };
+const SEVERITY_ORDER = { high: 0, medium: 1, low: 2 };
+const FLAG_META = {
+  schema: { label: 'Schema & migrations', tone: 'destructive', weight: 5 },
+  auth: { label: 'Auth, tokens & secrets', tone: 'destructive', weight: 5 },
+  api: { label: 'API surface', tone: 'warning', weight: 4 },
+  infra: { label: 'Infrastructure', tone: 'warning', weight: 3 },
+  config: { label: 'Config & env', tone: 'warning', weight: 2 },
+  deleted: { label: 'Deleted', tone: 'destructive', weight: 1 },
+  agent: { label: 'Agent config', tone: 'info', weight: 1 },
+  large: { label: 'Large change', tone: 'dim', weight: 0 },
+};
+const OVERVIEW = 'overview';
+
+const multi = DATA.sets.length > 1;
+const setById = new Map(DATA.sets.map((set) => [set.id, set]));
+const allFindings = DATA.sets.flatMap((set) => set.findings.map((finding) => ({ ...finding, set })));
+const verificationRows = DATA.verification?.rows ?? [];
+
+const state = {
+  set: multi ? 'all' : (DATA.sets[0]?.id ?? 'all'),
+  file: null,
+  cursorKey: null,
+  collapsed: new Set(),
+  diffStyle: window.innerWidth >= 1200 ? 'split' : 'unified',
+  viewed: new Set(),
+};
+const VIEWED_KEY = 'review-board:' + (DATA.meta.slug ?? DATA.meta.title) + ':viewed';
+try {
+  for (const key of JSON.parse(localStorage.getItem(VIEWED_KEY) ?? '[]')) state.viewed.add(key);
+} catch {}
+const persistViewed = () => {
+  try {
+    localStorage.setItem(VIEWED_KEY, JSON.stringify([...state.viewed]));
+  } catch {}
+};
+const diffCache = new Map();
+const diffInstances = new Map();
+
+const esc = (value) =>
+  String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+const icon = (name, cls = '') => '<svg class="codicon' + (cls ? ' ' + cls : '') + '" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true">' + (ICONS[name] ?? '') + '</svg>';
+const baseName = (path) => path.split('/').pop();
+const dirName = (path) => path.split('/').slice(0, -1).join('/');
+const GENERIC_NAMES = /^(index|route|page|layout|migration|service|types|constants)\.[a-z]+$/;
+const displayName = (path) => {
+  const parts = path.split('/');
+  const base = parts.pop();
+  return GENERIC_NAMES.test(base) && parts.length ? parts.pop() + '/' + base : base;
+};
+const fileKey = (setId, index) => setId + '|' + index;
+const parseKey = (key) => {
+  const [setId, index] = key.split('|');
+  return { set: setById.get(setId), index: Number(index) };
+};
+const lookup = (key) => {
+  const { set, index } = parseKey(key);
+  return { set, index, file: set.files[index] };
+};
+const plural = (n, noun) => n + ' ' + noun + (n === 1 ? '' : 's');
+const stats = (adds, dels) => '<span class="add">+' + adds + '</span> <span class="del">−' + dels + '</span>';
+const tierGroupOf = (tier) => TIER_GROUPS.find((group) => group.tiers.includes(tier)).id;
+const fmtTokens = (n) => (n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(0) + 'k' : String(n));
+const fmtMs = (ms) => {
+  const s = Math.round(ms / 1000);
+  return s >= 3600 ? Math.floor(s / 3600) + 'h ' + Math.floor((s % 3600) / 60) + 'm' : s >= 60 ? Math.floor(s / 60) + 'm ' + (s % 60) + 's' : s + 's';
+};
+const setName = (set) => (set.pr ? '#' + set.pr : set.label);
+const sevIcon = (severity) => icon(SEVERITY_ICON[severity] ?? 'info', 'sev-' + severity);
+const flagHtml = (flag) => '<span class="flag tone-' + FLAG_META[flag].tone + '">' + FLAG_META[flag].label + '</span>';
+
+const inlineMarkdown = (text) =>
+  esc(text)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+
+function renderMarkdown(text) {
+  const blocks = [];
+  let list = null;
+  const closeList = () => {
+    if (list) blocks.push('<' + list.tag + '>' + list.items.join('') + '</' + list.tag + '>');
+    list = null;
+  };
+  const pushItem = (tag, item) => {
+    if (!list || list.tag !== tag) {
+      closeList();
+      list = { tag, items: [] };
+    }
+    list.items.push('<li>' + inlineMarkdown(item) + '</li>');
+  };
+  for (const raw of text.split('\n')) {
+    const line = raw.trimEnd();
+    const heading = /^(#{1,6})\s+(.*)$/.exec(line);
+    const bullet = /^\s*[-*]\s+(.*)$/.exec(line);
+    const numbered = /^\s*\d+[.)]\s+(.*)$/.exec(line);
+    if (heading) {
+      closeList();
+      blocks.push('<p class="mdh">' + inlineMarkdown(heading[2]) + '</p>');
+    } else if (bullet) pushItem('ul', bullet[1]);
+    else if (numbered) pushItem('ol', numbered[1]);
+    else if (!line.trim()) closeList();
+    else {
+      closeList();
+      blocks.push('<p>' + inlineMarkdown(line) + '</p>');
+    }
+  }
+  closeList();
+  return blocks.join('');
+}
+
+const totals = DATA.sets.reduce(
+  (sum, set) => ({ files: sum.files + set.files.length, adds: sum.adds + set.adds, dels: sum.dels + set.dels }),
+  { files: 0, adds: 0, dels: 0 },
+);
+
+const askAttr = (ctx) => ' data-ask="' + esc(JSON.stringify(ctx)) + '"';
+const askButton = (ctx, label) => '<button type="button" class="ask"' + askAttr(ctx) + '>' + icon('comment') + '<span>' + esc(label) + '</span></button>';
+
+function askPrompt(ctx, text) {
+  const kind = ctx.tag === 'change-request' ? 'Change request' : 'Question';
+  return kind + ' about ' + ctx.what + ' (change set ' + ctx.set + ', ' + ctx.file + ':' + ctx.start + '-' + ctx.end + '): ' + text +
+    '\n\nSelected code (' + ctx.side + ' side, lines ' + ctx.start + '-' + ctx.end + '):\n```\n' + ctx.code + '\n```';
+}
+
+function queueAsk(ctx, text, form) {
+  const prompt = askPrompt(ctx, text);
+  const label = (ctx.tag === 'change-request' ? 'Change: ' : 'Q: ') + ctx.ref;
+  if (window.lavish) {
+    window.lavish.queuePrompt(prompt, { tag: ctx.tag, text: label, element: form, data: { ...ctx, question: text } });
+    form.innerHTML = '<span class="pill queued">' + icon('check') + 'queued</span>';
+    setTimeout(() => clearSelection(), 1200);
+    return;
+  }
+  form.innerHTML = '<div class="inline-answer">' + esc(prompt) + '</div><div class="actions"><button type="button" class="btn ghost" data-ask-cancel>Close</button></div>';
+}
+
+function openAskPanel(button) {
+  document.querySelector('.askpanel')?.remove();
+  const ctx = JSON.parse(button.dataset.ask);
+  const panel = document.createElement('div');
+  panel.className = 'askpanel';
+  panel.dataset.ctx = button.dataset.ask;
+  const placeholder = ctx.tag === 'change-request' ? 'What should change here?' : 'What do you want to know about this?';
+  panel.innerHTML =
+    '<div class="askref">' + esc(ctx.ref) + '</div>' +
+    '<textarea name="text" rows="3" placeholder="' + esc(placeholder) + '"></textarea>' +
+    '<div class="actions"><button type="button" class="btn" data-ask-submit>' + (ctx.tag === 'change-request' ? 'Queue change request' : 'Queue question') + '</button>' +
+    '<button type="button" class="btn ghost" data-ask-cancel>Cancel</button></div>';
+  button.closest('.seltool').appendChild(panel);
+  panel.querySelector('textarea').focus();
+}
+
+function submitAskPanel(button) {
+  const panel = button.closest('.askpanel');
+  const text = panel.querySelector('textarea').value.trim();
+  if (!text) {
+    panel.querySelector('textarea').focus();
+    return;
+  }
+  queueAsk(JSON.parse(panel.dataset.ctx), text, panel);
+}
+
+function renderShell() {
+  const { meta } = DATA;
+  document.getElementById('app').innerHTML =
+    '<div class="workbench" id="workbench">' +
+    '<header class="top"><div class="toprow"><h1>' + icon('source-control') + '<span>' + esc(meta.title) + '</span></h1>' +
+    (meta.lead ? '<p class="lead" title="' + esc(meta.lead) + '">' + esc(meta.lead) + '</p>' : '') + '</div>' +
+    '<div class="chips" id="chips"></div></header>' +
+    '<div class="body">' +
+    '<aside class="sidebar" aria-label="Changed files"><div class="tree" id="tree" tabindex="0" role="tree" aria-label="Changed files"></div></aside>' +
+    '<main class="editor">' +
+    '<div class="tabbar"><div class="tabs" id="tabs" role="tablist" aria-label="Open editors"></div><div class="editor-actions" id="editor-actions"></div></div>' +
+    '<div class="filebar" id="filebar"></div>' +
+    '<div class="editor-body" id="editor-body"></div>' +
+    '</main></div>' +
+    '<footer class="statusbar" id="statusbar"></footer>' +
+    '</div>';
+}
+
+function renderChips() {
+  if (!multi) return;
+  const chip = (id, name, detail) =>
+    '<button type="button" class="step' + (state.set === id ? ' on' : '') + '" data-set="' + esc(id) + '"><span class="t">' + esc(name) + '</span><span class="dim">' + detail + '</span></button>';
+  const detail = (files, findings) => plural(files, 'file') + (findings ? ' · <span class="sev-medium">' + plural(findings, 'finding') + '</span>' : '');
+  document.getElementById('chips').innerHTML =
+    chip('all', 'All', detail(totals.files, allFindings.length)) +
+    DATA.sets.map((set) => chip(set.id, setName(set) + (set.branch ? ' ' + set.branch.replace(/^[^/]+\//, '') : ''), detail(set.files.length, set.findings.length))).join('');
+}
+
+function viewedCount(sets) {
+  const keys = sets.flatMap((set) => set.files.map((file, index) => fileKey(set.id, index)));
+  return keys.filter((key) => state.viewed.has(key)).length + '/' + keys.length;
+}
+
+const visibleSets = () => (state.set === 'all' ? DATA.sets : [setById.get(state.set)]);
+
+function entriesFor(sets) {
+  return sets.flatMap((set) => set.files.map((file, index) => ({ set, file, key: fileKey(set.id, index) })));
+}
+
+const newDir = (name) => ({ name, dirs: new Map(), files: [] });
+
+function buildTree(entries) {
+  const root = newDir('');
+  for (const entry of entries) {
+    const parts = entry.file.path.split('/');
+    let node = root;
+    for (const dir of parts.slice(0, -1)) {
+      if (!node.dirs.has(dir)) node.dirs.set(dir, newDir(dir));
+      node = node.dirs.get(dir);
+    }
+    node.files.push(entry);
+  }
+  return root;
+}
+
+function compact(node, parentPath) {
+  let current = node;
+  let label = node.name;
+  while (current.files.length === 0 && current.dirs.size === 1) {
+    current = [...current.dirs.values()][0];
+    label += '/' + current.name;
+  }
+  return { node: current, label, path: parentPath ? parentPath + '/' + label : label };
+}
+
+const indentStyle = (depth) =>
+  'padding-left:' + (8 + depth * 8) + 'px;' +
+  (depth ? 'background-image: repeating-linear-gradient(to right, transparent 0 7px, var(--guide) 7px 8px); background-position: 9px 0; background-size: ' + depth * 8 + 'px 100%; background-repeat: no-repeat;' : '');
+
+function fileRow(entry, depth, showSet) {
+  const { file, key, set } = entry;
+  const classes = ['row', 'file', 't-' + file.tier, 's-' + file.status];
+  if (state.viewed.has(key)) classes.push('isviewed');
+  if (state.file === key) classes.push('sel');
+  if (state.cursorKey === key) classes.push('cur');
+  const title = file.oldPath ? file.oldPath + ' → ' + file.path : file.path;
+  const findings = set.findings.filter((finding) => finding.fileIndex === set.files.indexOf(file)).length;
+  return (
+    '<div class="' + classes.join(' ') + '" role="treeitem" aria-selected="' + (state.file === key) + '" data-lavish-action="open-file" data-key="' + key + '" style="' + indentStyle(depth) + '" title="' + esc(title) + '">' +
+    '<span class="twistie"></span>' +
+    '<input type="checkbox" class="viewed" data-viewed="' + key + '" title="Viewed" aria-label="Viewed"' + (state.viewed.has(key) ? ' checked' : '') + '>' +
+    '<span class="name">' + esc(baseName(file.path)) + '</span>' +
+    '<span class="deco">' +
+    (findings ? '<span class="badge" title="' + plural(findings, 'finding') + '">' + findings + '</span>' : '') +
+    (showSet ? '<span class="setbadge">' + esc(setName(set)) + '</span>' : '') +
+    '<span class="st" title="' + STATUS_LABEL[file.status] + '">' + file.status + '</span></span></div>'
+  );
+}
+
+function folderRows(node, depth, parentPath, showSet) {
+  const dirs = [...node.dirs.values()].sort((a, b) => a.name.localeCompare(b.name)).map((dir) => compact(dir, parentPath));
+  const html = [];
+  for (const dir of dirs) {
+    const id = state.set + ':' + dir.path;
+    const collapsed = state.collapsed.has(id);
+    html.push(
+      '<div class="row folder" role="treeitem" data-lavish-action="toggle-folder" aria-expanded="' + !collapsed + '" data-folder="' + esc(id) + '" style="' + indentStyle(depth) + '" title="' + esc(dir.path) + '">' +
+      '<span class="twistie">' + icon(collapsed ? 'chevron-right' : 'chevron-down') + '</span><span class="name">' + esc(dir.label) + '</span></div>',
+    );
+    if (!collapsed) html.push(folderRows(dir.node, depth + 1, dir.path, showSet));
+  }
+  const files = [...node.files].sort((a, b) => baseName(a.file.path).localeCompare(baseName(b.file.path)));
+  for (const entry of files) html.push(fileRow(entry, depth, showSet));
+  return html.join('');
+}
+
+const groupCollapsed = (group) => {
+  const id = 'g:' + state.set + ':' + group.id;
+  return state.collapsed.has(id) ? !group.collapsed : Boolean(group.collapsed);
+};
+
+function renderTree() {
+  const entries = entriesFor(visibleSets());
+  const showSet = state.set === 'all' && multi;
+  const html = TIER_GROUPS.map((group) => {
+    const own = entries.filter((entry) => tierGroupOf(entry.file.tier) === group.id);
+    if (!own.length) return '';
+    const collapsed = groupCollapsed(group);
+    return (
+      '<div class="row group" role="treeitem" data-lavish-action="toggle-group" aria-expanded="' + !collapsed + '" data-group="' + group.id + '" style="' + indentStyle(0) + '">' +
+      '<span class="twistie">' + icon(collapsed ? 'chevron-right' : 'chevron-down') + '</span><span class="name">' + group.label + '</span><span class="badge">' + own.length + '</span>' +
+      (group.hint ? '<span class="hintlabel">' + group.hint + '</span>' : '') + '</div>' +
+      (collapsed ? '' : folderRows(buildTree(own), 1, '', showSet))
+    );
+  }).join('');
+  document.getElementById('tree').innerHTML = html || '<div class="empty-tree">No changed files.</div>';
+}
+
+const findingRef = (finding) => displayName(finding.file) + (finding.line ? ':' + finding.line : '');
+const fileLink = (set, index, label, extra = '') => {
+  const file = set.files[index];
+  return '<button type="button" class="link" data-open="' + fileKey(set.id, index) + '"' + extra + ' title="' + esc(file.path) + '">' + esc(label) + '</button>';
+};
+const fileRef = (set, index) => {
+  const file = set.files[index];
+  const dir = dirName(file.path);
+  return fileLink(set, index, baseName(file.path)) + (dir ? '<span class="desc">' + esc(dir) + '</span>' : '');
+};
+
+const reviewable = (file) => file.tier === 'core' || file.tier === 'supporting';
+const riskScore = (file) => file.flags.reduce((sum, flag) => sum + FLAG_META[flag].weight, 0) + Math.min((file.adds + file.dels) / 100, 3);
+
+function readFirst(set) {
+  if (set.startHere.length) return { auto: false, indices: set.startHere };
+  const scored = set.files
+    .map((file, index) => ({ index, score: riskScore(file) }))
+    .filter(({ index }) => reviewable(set.files[index]))
+    .sort((a, b) => b.score - a.score);
+  return { auto: true, indices: scored.map((entry) => entry.index) };
+}
+
+const section = (title, body, id) => '<section class="ov-sec"' + (id ? ' id="' + id + '"' : '') + '><h3>' + title + '</h3>' + body + '</section>';
+
+const more = (items, limit, render) =>
+  '<ul class="list">' + items.slice(0, limit).map(render).join('') + '</ul>' +
+  (items.length > limit ? '<details class="disclosure"><summary><span class="twistie">' + icon('chevron-right') + '</span>' + (items.length - limit) + ' more</summary><ul class="list">' + items.slice(limit).map(render).join('') + '</ul></details>' : '');
+
+function readFirstSection(set, compactView) {
+  const { auto, indices } = readFirst(set);
+  if (!indices.length) return '';
+  const title = auto ? 'Read first <span class="dim">by risk and size</span>' : 'Read first <span class="dim">in this order</span>';
+  let n = 0;
+  const item = (index) => {
+    const file = set.files[index];
+    n += 1;
+    return '<li class="item"><span class="n">' + n + '</span>' + fileRef(set, index) + (!auto && file.note ? '<span class="note">' + esc(file.note) + '</span>' : '') + '</li>';
+  };
+  return section(title, more(indices, compactView ? 3 : 8, item));
+}
+
+const findingItem = (set) => (finding) =>
+  '<li class="item" data-finding="' + esc(finding.id) + '">' + sevIcon(finding.severity) + '<span class="fid">' + esc(finding.id) + '</span>' +
+  (finding.line && finding.fileIndex >= 0 ? fileLink(set, finding.fileIndex, 'line ' + finding.line, ' data-finding-id="' + esc(finding.id) + '"') : '') +
+  '<span class="text inline">' + esc(finding.text) + '</span></li>';
+
+function checkSection(set, compactView) {
+  const byFile = new Map();
+  set.files.forEach((file, index) => {
+    if (file.flags.length) byFile.set(index, { index, file, findings: [] });
+  });
+  const loose = [];
+  for (const finding of set.findings) {
+    if (finding.fileIndex >= 0) {
+      if (!byFile.has(finding.fileIndex)) byFile.set(finding.fileIndex, { index: finding.fileIndex, file: set.files[finding.fileIndex], findings: [] });
+      byFile.get(finding.fileIndex).findings.push(finding);
+    } else loose.push(finding);
+  }
+  const severity = (entry) => Math.min(...entry.findings.map((finding) => SEVERITY_ORDER[finding.severity] ?? 3), 3);
+  const entries = [...byFile.values()].sort((a, b) => severity(a) - severity(b) || riskScore(b.file) - riskScore(a.file));
+  if (!entries.length && !loose.length) {
+    const note = DATA.meta.depth === 'light' ? 'Nothing flagged by path. Code review was not run on this light board.' : 'Nothing flagged by path and code review found nothing to report.';
+    return section('Check carefully', '<p class="hint">' + note + '</p>');
+  }
+  const item = (entry) =>
+    '<li class="item">' + fileRef(set, entry.index) +
+    (entry.file.flags.length ? '<span class="flags">' + entry.file.flags.map(flagHtml).join('') + '</span>' : '') +
+    (entry.findings.length ? '<ul class="sub">' + [...entry.findings].sort((a, b) => (SEVERITY_ORDER[a.severity] ?? 3) - (SEVERITY_ORDER[b.severity] ?? 3)).map(findingItem(set)).join('') + '</ul>' : '') +
+    '</li>';
+  const looseHtml = loose.length ? '<ul class="list">' + loose.map(findingItem(set)).join('') + '</ul>' : '';
+  const note = DATA.meta.depth === 'light' ? '<p class="hint">Code review was not run on this light board; these are path flags only.</p>' : '';
+  return section('Check carefully', more(entries, compactView ? 3 : entries.length, item) + looseHtml + note);
+}
+
+function commitsHtml(set) {
+  if (!set.commits?.length) return '';
+  return (
+    '<details class="disclosure"><summary><span class="twistie">' + icon('chevron-right') + '</span>' + plural(set.commits.length, 'commit') + '</summary><ul class="commits">' +
+    set.commits.map((commit) => '<li><span class="mono dim">' + esc(commit.sha) + '</span> ' + esc(commit.subject) + '</li>').join('') + '</ul></details>'
+  );
+}
+
+function descriptionHtml(set) {
+  if (!set.summary) return '';
+  return '<details class="disclosure"><summary><span class="twistie">' + icon('chevron-right') + '</span>Description</summary><div class="md">' + renderMarkdown(set.summary) + '</div></details>';
+}
+
+function overviewSet(set, compactView) {
+  const heading = set.pr ? '#' + set.pr + ' ' + (set.branch ?? '') : set.label;
+  return (
+    '<article class="ov-set"><header class="ov-head"><h2>' + esc(heading) + '</h2>' +
+    '<div class="ov-meta"><span>' + esc(set.title) + '</span><span>' + (KIND_LABEL[set.kind] ?? set.kind) + '</span><span>' + plural(set.files.length, 'file') + '</span><span>' + stats(set.adds, set.dels) + '</span></div></header>' +
+    '<div class="ov-grid">' + readFirstSection(set, compactView) + checkSection(set, compactView) + '</div>' +
+    commitsHtml(set) + descriptionHtml(set) +
+    '</article>'
+  );
+}
+
+function verificationSection() {
+  if (!verificationRows.length) return '';
+  const { verification } = DATA;
+  const cell = (result) => {
+    if (result === 'pass') return [icon('pass', 'res-pass'), '<span class="result res-pass">pass</span>'];
+    if (/fail|error/i.test(result)) return [icon('error', 'res-warn'), '<span class="result res-warn">' + esc(result) + '</span>'];
+    return [icon('circle-filled', 'dim'), '<span class="result">' + esc(result) + '</span>'];
+  };
+  const rows = verificationRows
+    .map((row) => {
+      const [iconHtml, resultHtml] = cell(row.result);
+      return '<div class="vrow">' + iconHtml + '<span class="check">' + esc(row.check) + '</span>' + resultHtml + '</div>';
+    })
+    .join('');
+  return section('Checks' + (verification.lead ? ' <span class="dim">' + esc(verification.lead) + '</span>' : ''), rows, 'verification');
+}
+
+function decisionsSection() {
+  if (!DATA.decisions.length) return '';
+  const body = DATA.decisions
+    .map(
+      (decision) =>
+        '<div class="dec" data-decision="' + esc(decision.id) + '"><div class="q"><span class="mono dim">' + esc(decision.id) + '</span> ' + esc(decision.title) + '</div>' +
+        '<ol>' + decision.options.map((option) => '<li>' + esc(option) + '</li>').join('') + '</ol></div>',
+    )
+    .join('');
+  return section('Decisions <span class="dim">annotate the option you choose</span>', body, 'decisions');
+}
+
+function renderOverview() {
+  if (!DATA.sets.length) return '<div class="emptystate">Nothing to review: the change sets of this board have no changes.</div>';
+  const sets = visibleSets();
+  const board = verificationSection() + decisionsSection();
+  return '<div class="ov">' + sets.map((set) => overviewSet(set, sets.length > 1)).join('') + (board ? '<div class="ov-board ov-grid">' + board + '</div>' : '') + '</div>';
+}
+
+const patchHasHunks = (file) => file.patch.includes('\n@@ ');
+
+function excerpt(patch, side, start, end) {
+  const out = [];
+  let oldN = 0;
+  let newN = 0;
+  let inHunk = false;
+  for (const line of patch.split('\n')) {
+    const hunk = /^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/.exec(line);
+    if (hunk) {
+      oldN = Number(hunk[1]);
+      newN = Number(hunk[2]);
+      inHunk = true;
+      continue;
+    }
+    if (!inHunk || line.startsWith('\\')) continue;
+    const tag = line[0];
+    const text = line.slice(1);
+    if (tag === '+') {
+      if (side === 'additions' && newN >= start && newN <= end) out.push(text);
+      newN++;
+    } else if (tag === '-') {
+      if (side === 'deletions' && oldN >= start && oldN <= end) out.push(text);
+      oldN++;
+    } else {
+      const n = side === 'additions' ? newN : oldN;
+      if (n >= start && n <= end) out.push(text);
+      oldN++;
+      newN++;
+    }
+  }
+  return out.join('\n');
+}
+
+function annotationElement(finding) {
+  const holder = document.createElement('div');
+  holder.className = 'annot';
+  holder.dataset.finding = finding.id;
+  holder.innerHTML = sevIcon(finding.severity) + '<span class="mono dim">' + esc(finding.id) + '</span><span class="text">' + esc(finding.text) + '</span>';
+  return holder;
+}
+
+const diffRoot = () => document.querySelector('#diffmount diffs-container')?.shadowRoot ?? null;
+const contentLines = (root) => [...root.querySelectorAll('[data-content] [data-line]')];
+function lineElementOf(container, offset, isEnd) {
+  const direct = (container.nodeType === 1 ? container : container.parentElement)?.closest('[data-line]');
+  if (direct) return direct;
+  if (container.nodeType !== 1) return null;
+  const child = container.childNodes[isEnd ? Math.max(0, offset - 1) : Math.min(offset, container.childNodes.length - 1)];
+  if (!child) return null;
+  if (child.nodeType === 1 && child.matches('[data-line]')) return child;
+  return child.nodeType === 1 ? (child.querySelector('[data-line]') ?? child.closest('[data-line]')) : null;
+}
+
+function rangeFromLines(root, lines, startEl, endEl) {
+  const startIndex = lines.indexOf(startEl);
+  const endIndex = lines.indexOf(endEl);
+  if (startIndex < 0 || endIndex < 0) return null;
+  const [from, to] = startIndex <= endIndex ? [startIndex, endIndex] : [endIndex, startIndex];
+  const span = lines.slice(from, to + 1);
+  const allDeleted = span.every((el) => el.dataset.lineType === 'change-deletion');
+  const side = allDeleted ? 'deletions' : 'additions';
+  const otherSide = side === 'additions' ? 'change-deletion' : 'change-addition';
+  const numberOf = (el) => (el.dataset.lineType === otherSide ? (el.dataset.altLine ? Number(el.dataset.altLine) : null) : Number(el.dataset.line));
+  const numbers = span.map(numberOf).filter((n) => Number.isFinite(n));
+  if (!numbers.length) return null;
+  return { side, start: Math.min(...numbers), end: Math.max(...numbers), anchor: lines[to] };
+}
+
+function selectionInDiff() {
+  const root = diffRoot();
+  if (!root || !state.file) return null;
+  const shadowSelection = root.getSelection?.();
+  let range = null;
+  let text = '';
+  if (shadowSelection && shadowSelection.rangeCount && !shadowSelection.isCollapsed) {
+    range = shadowSelection.getRangeAt(0);
+    text = shadowSelection.toString();
+  } else {
+    const selection = document.getSelection();
+    if (!selection || selection.isCollapsed) return null;
+    range = selection.getComposedRanges?.({ shadowRoots: [root] })[0] ?? null;
+    text = selection.toString();
+  }
+  if (!range || !text.trim()) return null;
+  const startEl = lineElementOf(range.startContainer, range.startOffset, false);
+  const endEl = lineElementOf(range.endContainer, range.endOffset, true);
+  if (!startEl || !endEl || !root.contains(startEl) || !root.contains(endEl)) return null;
+  const lines = rangeFromLines(root, contentLines(root), startEl, endEl);
+  if (!lines) return null;
+  return { ...lines, code: text.replace(/\n{3,}/g, '\n\n').trimEnd() };
+}
+
+let selectionToolbar = null;
+let toolbarAnchor = null;
+
+function hideSelectionToolbar() {
+  selectionToolbar?.remove();
+  selectionToolbar = null;
+  toolbarAnchor = null;
+}
+
+function positionToolbar() {
+  if (!selectionToolbar || !toolbarAnchor) return;
+  const rect = toolbarAnchor.getBoundingClientRect();
+  const width = selectionToolbar.offsetWidth;
+  selectionToolbar.style.top = rect.bottom + window.scrollY + 6 + 'px';
+  selectionToolbar.style.left = Math.max(8, Math.min(rect.left + window.scrollX, window.scrollX + window.innerWidth - width - 8)) + 'px';
+}
+
+function showSelectionToolbar(selection) {
+  const { set, file } = lookup(state.file);
+  const ref = displayName(file.path) + ':' + selection.start + (selection.end !== selection.start ? '-' + selection.end : '');
+  const ctx = { what: 'selected code', ref, set: set.id, file: file.path, side: selection.side, start: selection.start, end: selection.end, code: selection.code };
+  hideSelectionToolbar();
+  selectionToolbar = document.createElement('div');
+  selectionToolbar.className = 'seltool';
+  selectionToolbar.innerHTML =
+    '<div class="selrow"><span class="mono">' + esc(ref) + ' <span class="dim">' + (selection.side === 'additions' ? 'new' : 'old') + '</span></span>' +
+    askButton({ ...ctx, tag: 'question' }, 'Ask about this') + askButton({ ...ctx, tag: 'change-request' }, 'Request change') +
+    '<button type="button" class="ibtn" data-sel-clear title="Dismiss" aria-label="Dismiss">' + icon('close') + '</button></div>';
+  document.body.appendChild(selectionToolbar);
+  toolbarAnchor = selection.anchor;
+  positionToolbar();
+}
+
+function onSelection(key, range) {
+  if (state.file !== key) return;
+  if (!range) {
+    if (!selectionToolbar?.querySelector('.askpanel')) hideSelectionToolbar();
+    return;
+  }
+  const { file } = lookup(key);
+  const start = Math.min(range.start, range.end);
+  const end = Math.max(range.start, range.end);
+  const side = range.side ?? (file.status === 'D' ? 'deletions' : 'additions');
+  const root = diffRoot();
+  const anchor = root ? contentLines(root).find((el) => Number(el.dataset.line) === end && (side === 'deletions') === (el.dataset.lineType === 'change-deletion')) ?? contentLines(root).find((el) => Number(el.dataset.line) === end) : null;
+  if (!anchor) return;
+  showSelectionToolbar({ side, start, end, anchor, code: excerpt(file.patch, side, start, end) });
+}
+
+function updateSelectionToolbar(event) {
+  if (selectionToolbar && event.composedPath().includes(selectionToolbar)) return;
+  const selection = selectionInDiff();
+  if (selection) showSelectionToolbar(selection);
+  else if (!selectionToolbar?.querySelector('.askpanel')) hideSelectionToolbar();
+}
+
+function clearSelection() {
+  diffInstances.get(state.file + '|' + state.diffStyle)?.setSelectedLines(null);
+  document.getSelection()?.removeAllRanges();
+  hideSelectionToolbar();
+}
+
+function buildDiffElement(key, set, file, index) {
+  const holder = document.createElement('div');
+  if (file.binary) {
+    holder.innerHTML = '<div class="diffnote">Binary file, no textual diff.</div>';
+    return holder;
+  }
+  if (file.omitted) {
+    holder.innerHTML = '<div class="diffnote">Generated file over 100 KB: patch omitted, stats kept (' + stats(file.adds, file.dels) + ').</div>';
+    return holder;
+  }
+  if (!patchHasHunks(file)) {
+    holder.innerHTML = '<div class="diffnote">' + (file.status === 'R' ? 'Renamed without content changes.' : 'No textual changes.') + '</div>';
+    return holder;
+  }
+  const side = file.status === 'D' ? 'deletions' : 'additions';
+  const lineAnnotations = set.findings.filter((finding) => finding.fileIndex === index && finding.line).map((finding) => ({ side, lineNumber: finding.line, metadata: finding }));
+  try {
+    const fileDiff = processPatch(file.patch).files[0];
+    const instance = new FileDiff({
+      theme: THEME,
+      themeType: 'dark',
+      overflow: 'wrap',
+      diffStyle: state.diffStyle,
+      diffIndicators: 'none',
+      disableFileHeader: true,
+      enableLineSelection: true,
+      onLineSelected: (range) => onSelection(key, range),
+      renderAnnotation: (annotation) => annotationElement(annotation.metadata),
+    });
+    instance.render({ containerWrapper: holder, fileDiff, lineAnnotations });
+    diffInstances.set(key + '|' + state.diffStyle, instance);
+  } catch (error) {
+    holder.innerHTML = '<div class="diffnote">Diff could not be rendered: ' + esc(error.message) + '</div>';
+  }
+  return holder;
+}
+
+function cachedDiff(key, set, file, index) {
+  const cacheKey = key + '|' + state.diffStyle;
+  if (!diffCache.has(cacheKey)) diffCache.set(cacheKey, buildDiffElement(key, set, file, index));
+  return diffCache.get(cacheKey);
+}
+
+function renderTabs() {
+  const tab = (key, inner, title) =>
+    '<div class="tab' + ((state.file ?? OVERVIEW) === key ? ' on' : '') + '" role="tab" tabindex="0" aria-selected="' + ((state.file ?? OVERVIEW) === key) + '" data-lavish-action="switch-tab" data-tab="' + esc(key) + '"' + (title ? ' title="' + esc(title) + '"' : '') + '>' + inner + '</div>';
+  let fileTab = '';
+  if (state.file) {
+    const { set, file } = lookup(state.file);
+    const dir = dirName(file.path);
+    fileTab = tab(
+      state.file,
+      '<span class="st s-' + file.status + '">' + file.status + '</span><span class="label">' + esc(baseName(file.path)) + '</span>' +
+        (dir ? '<span class="desc">' + esc(dir) + '</span>' : '') + (multi ? '<span class="desc">' + esc(setName(set)) + '</span>' : '') +
+        '<button type="button" class="tab-close" data-close title="Close" aria-label="Close ' + esc(baseName(file.path)) + '">' + icon('close') + '</button>',
+      file.path,
+    );
+  }
+  document.getElementById('tabs').innerHTML = tab(OVERVIEW, icon('book') + '<span class="label">Overview</span>') + fileTab;
+}
+
+function renderEditorActions() {
+  const target = document.getElementById('editor-actions');
+  if (!state.file) {
+    target.innerHTML = '';
+    return;
+  }
+  const viewed = state.viewed.has(state.file);
+  target.innerHTML =
+    '<button type="button" class="ibtn" data-toggle-viewed="' + state.file + '" aria-pressed="' + viewed + '" title="' + (viewed ? 'Viewed, click to unmark' : 'Mark as viewed') + '">' + icon(viewed ? 'eye-closed' : 'eye') + '</button>' +
+    '<span class="seg" role="group" aria-label="Diff layout">' +
+    ['unified', 'split']
+      .map((style) => '<button type="button" class="ibtn" data-style="' + style + '" aria-pressed="' + (state.diffStyle === style) + '" title="' + (style === 'split' ? 'Side by side' : 'Inline') + '">' + icon(style === 'split' ? 'split-horizontal' : 'list-flat') + '</button>')
+      .join('') +
+    '</span>';
+}
+
+function renderFilebar() {
+  const target = document.getElementById('filebar');
+  if (!state.file) {
+    target.innerHTML = '';
+    return;
+  }
+  const { file } = lookup(state.file);
+  target.innerHTML =
+    file.flags.map((flag) => '<span class="flag tone-' + FLAG_META[flag].tone + '">' + icon('warning') + FLAG_META[flag].label + '</span>').join('') +
+    (file.note ? '<span class="note">' + esc(file.note) + '</span>' : '') +
+    '<span class="right"><span class="s-' + file.status + '">' + STATUS_LABEL[file.status] + '</span>' + (file.oldPath ? '<span>was ' + esc(file.oldPath) + '</span>' : '') +
+    '<span>' + TIER_LABEL[file.tier] + '</span><span class="mono">' + stats(file.adds, file.dels) + '</span></span>';
+}
+
+function renderEditorBody() {
+  const body = document.getElementById('editor-body');
+  if (!state.file) {
+    body.innerHTML = renderOverview();
+    return;
+  }
+  const { set, file, index } = lookup(state.file);
+  body.innerHTML = '<div class="diffwrap" id="diffmount"></div>';
+  document.getElementById('diffmount').appendChild(cachedDiff(state.file, set, file, index));
+  body.scrollTop = 0;
+  hideSelectionToolbar();
+}
+
+function renderEditor() {
+  renderTabs();
+  renderEditorActions();
+  renderFilebar();
+  renderEditorBody();
+}
+
+function scrollToFinding(id) {
+  requestAnimationFrame(() => {
+    const target = document.querySelector('#diffmount [data-finding="' + CSS.escape(id) + '"]') ?? diffRoot()?.querySelector('[data-finding="' + CSS.escape(id) + '"]');
+    target?.scrollIntoView({ block: 'center' });
+  });
+}
+
+function renderStatus() {
+  const { meta, usage } = DATA;
+  const bySeverity = ['high', 'medium', 'low'].map((severity) => sevIcon(severity) + '<span>' + allFindings.filter((finding) => finding.severity === severity).length + '</span>').join('');
+  const left =
+    '<span class="sb remote">' + icon('source-control') + esc(meta.mode) + ' · ' + esc(meta.depth) + '</span>' +
+    (meta.head ? '<span class="sb" title="' + esc(meta.base) + ' → ' + esc(meta.head) + '">' + icon('git-branch') + esc(meta.head) + (meta.baseSha || meta.headSha ? ' <span class="mono dim">' + esc(meta.baseSha) + ' → ' + esc(meta.headSha) + '</span>' : '') + '</span>' : '') +
+    (allFindings.length ? '<button type="button" class="sb" data-tab="' + OVERVIEW + '" title="Findings by severity, in the Overview">' + bySeverity + '</button>' : '') +
+    (state.file ? '<span class="sb hint">Select code to ask about it or request a change</span>' : '');
+  const right =
+    (DATA.sets.length ? '<span class="sb">' + icon('eye') + viewedCount(DATA.sets) + ' viewed</span>' : '') +
+    (usage ? '<span class="sb" title="' + esc((usage.phases ?? []).map((phase) => phase.name + ' ' + fmtMs(phase.ms) + ' / ' + fmtTokens(phase.input + phase.output)).join(', ')) + '">' + fmtMs(usage.wallMs) + ' · in ' + fmtTokens(usage.total.input) + ' · out ' + fmtTokens(usage.total.output) + (usage.agents ? ' · ' + plural(usage.agents, 'agent') : '') + '</span>' : '') +
+    '<span class="sb dim">Built ' + esc(new Date(meta.generatedAt).toLocaleString()) + '</span>';
+  document.getElementById('statusbar').innerHTML = left + '<span class="sb-right">' + right + '</span>';
+}
+
+function renderAll() {
+  renderChips();
+  renderTree();
+  renderEditor();
+  renderStatus();
+}
+
+function showOverview() {
+  if (!state.file) return;
+  state.file = null;
+  renderTree();
+  renderEditor();
+  renderStatus();
+}
+
+function openFile(key) {
+  const { set } = parseKey(key);
+  if (state.set !== 'all' && state.set !== set.id) {
+    state.set = set.id;
+    renderChips();
+  }
+  state.file = key;
+  state.cursorKey = key;
+  renderTree();
+  renderEditor();
+  renderStatus();
+  document.querySelector('#tree .row.sel')?.scrollIntoView({ block: 'nearest' });
+  const editor = document.querySelector('.editor');
+  const top = editor.getBoundingClientRect().top;
+  if (top < 0 || top > window.innerHeight * 0.6) editor.scrollIntoView({ block: 'start' });
+}
+
+function jumpTo(id) {
+  showOverview();
+  document.getElementById(id)?.scrollIntoView({ block: 'start' });
+}
+
+function selectSet(id) {
+  state.set = id;
+  renderChips();
+  renderTree();
+  if (!state.file) renderEditor();
+}
+
+function toggleCollapsed(id) {
+  state.collapsed.has(id) ? state.collapsed.delete(id) : state.collapsed.add(id);
+  renderTree();
+}
+
+function toggleViewed(key, force) {
+  const next = force ?? !state.viewed.has(key);
+  next ? state.viewed.add(key) : state.viewed.delete(key);
+  persistViewed();
+  renderTree();
+  renderEditorActions();
+  renderStatus();
+}
+
+function moveCursor(delta) {
+  const rows = [...document.querySelectorAll('#tree .file')];
+  if (!rows.length) return;
+  const current = rows.findIndex((row) => row.dataset.key === state.cursorKey);
+  const next = Math.min(rows.length - 1, Math.max(0, current + delta));
+  state.cursorKey = rows[next].dataset.key;
+  renderTree();
+  document.querySelector('#tree .row.cur')?.scrollIntoView({ block: 'nearest' });
+}
+
+function bindEvents() {
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+    const viewedBox = target.closest('[data-viewed]');
+    if (viewedBox) return toggleViewed(viewedBox.dataset.viewed, viewedBox.checked);
+    const viewedButton = target.closest('[data-toggle-viewed]');
+    if (viewedButton) return toggleViewed(viewedButton.dataset.toggleViewed);
+    const ask = target.closest('[data-ask]');
+    if (ask) return openAskPanel(ask);
+    if (target.closest('[data-ask-submit]')) return submitAskPanel(target.closest('[data-ask-submit]'));
+    if (target.closest('[data-ask-cancel]')) return target.closest('.askpanel')?.remove();
+    if (target.closest('[data-sel-clear]')) return clearSelection();
+    if (target.closest('[data-close]')) return showOverview();
+    const tab = target.closest('[data-tab]');
+    if (tab) return tab.dataset.tab === OVERVIEW ? showOverview() : openFile(tab.dataset.tab);
+    const jump = target.closest('[data-jump]');
+    if (jump) return jumpTo(jump.dataset.jump);
+    const set = target.closest('[data-set]');
+    if (set) return selectSet(set.dataset.set);
+    const open = target.closest('[data-open]');
+    if (open) {
+      openFile(open.dataset.open);
+      if (open.dataset.findingId) scrollToFinding(open.dataset.findingId);
+      return;
+    }
+    const style = target.closest('[data-style]');
+    if (style) {
+      state.diffStyle = style.dataset.style;
+      renderEditorActions();
+      return renderEditorBody();
+    }
+    const group = target.closest('[data-group]');
+    if (group) return toggleCollapsed('g:' + state.set + ':' + group.dataset.group);
+    const folder = target.closest('[data-folder]');
+    if (folder) return toggleCollapsed(folder.dataset.folder);
+    const row = target.closest('#tree .file');
+    if (row) return openFile(row.dataset.key);
+  });
+  document.addEventListener('mouseup', (event) => setTimeout(() => updateSelectionToolbar(event), 0));
+  document.addEventListener('keyup', (event) => {
+    if (event.key.startsWith('Arrow') || event.key === 'Shift') setTimeout(() => updateSelectionToolbar(event), 0);
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      const panel = document.querySelector('.askpanel');
+      if (panel) panel.remove();
+      else if (selectionToolbar) clearSelection();
+      return;
+    }
+    const tab = event.target.closest?.('[data-tab]');
+    if (tab && (event.key === 'Enter' || event.key === ' ')) {
+      event.preventDefault();
+      tab.dataset.tab === OVERVIEW ? showOverview() : openFile(tab.dataset.tab);
+    }
+  });
+  document.getElementById('editor-body').addEventListener('scroll', positionToolbar, { passive: true });
+  document.getElementById('tree').addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowDown') moveCursor(1);
+    else if (event.key === 'ArrowUp') moveCursor(-1);
+    else if ((event.key === 'Enter' || event.key === ' ') && state.cursorKey) openFile(state.cursorKey);
+    else if (event.key === 'v' && state.cursorKey) toggleViewed(state.cursorKey);
+    else return;
+    event.preventDefault();
+  });
+}
+
+renderShell();
+renderAll();
+bindEvents();
+</script>
+</body>
+</html>

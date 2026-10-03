@@ -1,0 +1,26 @@
+{
+  "name": "review-board-dev",
+  "private": true,
+  "type": "module",
+  "description": "Development tooling for the review-board skill. Nothing here ships with the skill.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test --test-reporter=spec \"test/unit/**/*.test.mjs\" \"test/integration/**/*.test.mjs\"",
+    "test:e2e": "playwright test",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "typecheck": "tsc -p tsconfig.json",
+    "validate:plugin": "node scripts/check-plugin.mjs",
+    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm validate:plugin && pnpm test:e2e"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.15",
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^22.20.4",
+    "typescript": "^7.0.2"
+  },
+  "packageManager": "pnpm@11.25.0"
+}

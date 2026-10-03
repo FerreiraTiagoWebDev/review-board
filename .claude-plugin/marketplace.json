@@ -1,11 +1,14 @@
 {
   "name": "review-board",
   "owner": { "name": "Tiago Ferreira", "url": "https://github.com/FerreiraTiagoWebDev" },
+  "description": "The review-board skill as a Claude Code plugin.",
   "plugins": [
     {
       "name": "review-board",
       "source": "./",
-      "description": "Visual review board for pull requests, branches and merge trains, reviewed in Lavish."
+      "description": "Visual review board for pull requests, branches and merge trains, reviewed in Lavish.",
+      "category": "development",
+      "keywords": ["code-review", "pull-request", "diff"]
     }
   ]
 }
