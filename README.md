@@ -9,6 +9,8 @@ Review findings sit on their lines, test results and open decisions sit beside t
 
 ![Overview of a two-PR merge train: files to read first, findings to check, checks and decisions](docs/overview.png)
 
+Click a finding and its diff opens with the finding under the line it is about:
+
 ![A diff in split view with a code-review finding pinned under the line it is about](docs/diff.png)
 
 ## How it works

@@ -200,6 +200,7 @@ try {
   await page.goto(`file://${buildDemo(dir)}`);
   await page.locator('.editor-body .ov-set').first().waitFor();
   await page.screenshot({ path: join(DOCS, 'overview.png') });
+  await page.setViewportSize({ width: 1400, height: 720 });
   await page.locator('.editor-body [data-finding-id="41-F1"]').click();
   await page.locator('#diffmount [data-finding="41-F1"]').waitFor();
   await page.waitForLoadState('networkidle');
