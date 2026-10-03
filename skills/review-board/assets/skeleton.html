@@ -651,7 +651,7 @@ function checkSection(set, compactView) {
   const severity = (entry) => Math.min(...entry.findings.map((finding) => SEVERITY_ORDER[finding.severity] ?? 3), 3);
   const entries = [...byFile.values()].sort((a, b) => severity(a) - severity(b) || riskScore(b.file) - riskScore(a.file));
   if (!entries.length && !loose.length) {
-    const note = DATA.meta.depth === 'light' ? 'Nothing flagged by path. Code review was not run on this light board.' : 'Nothing flagged by path and code review found nothing to report.';
+    const note = DATA.meta.depth === 'light' ? 'Nothing flagged by path. Code review was not run on this light board.' : 'Nothing flagged by path. Code review found nothing to report.';
     return section('Check carefully', '<p class="hint">' + note + '</p>');
   }
   const item = (entry) =>

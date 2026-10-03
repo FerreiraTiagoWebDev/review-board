@@ -1,11 +1,23 @@
 # review-board
 
-A Claude Code skill that turns a pull request, a branch, or a merge train of several PRs into one review page.
-You get the file tree, the diffs, what to read first and what to check carefully, review findings pinned to their lines, test results, and the decisions you send back to the agent.
-It is styled after VS Code and built around two questions per change set: what to read first, and what to check carefully.
-You talk back to the agent by annotating the page in Lavish.
+[![CI](https://github.com/FerreiraTiagoWebDev/review-board/actions/workflows/ci.yml/badge.svg)](https://github.com/FerreiraTiagoWebDev/review-board/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-![A review board for a two-PR merge train](docs/screenshot.png)
+A Claude Code skill that turns a pull request, a branch, or a merge train of several PRs into one review page, styled after VS Code.
+Every change set answers two questions: what to read first, and what to check carefully.
+Review findings sit on their lines, test results and open decisions sit beside them, and you answer the agent by annotating the page in [Lavish](https://www.npmjs.com/package/lavish-axi).
+
+![Overview of a two-PR merge train: files to read first, findings to check, checks and decisions](docs/overview.png)
+
+![A diff in split view with a code-review finding pinned under the line it is about](docs/diff.png)
+
+## How it works
+
+1. The agent collects the diffs from git and, for a merge train, merges the PRs locally on a new branch.
+2. With `--full` or a train, it runs a code review on each change set and runs the repo's checks.
+3. It writes what to read first, what to check and the findings into a JSON file, and a script builds the page from it.
+4. You open the page in Lavish and annotate it: fix, accept or defer a finding, ask about selected code, or choose to push.
+5. The agent acts on each answer, rebuilds the page, and opens a PR only when you choose to push.
 
 ## Install
 
@@ -34,7 +46,7 @@ The page opens in [Lavish](https://www.npmjs.com/package/lavish-axi), which the 
 /review-board feat/x          # a branch against origin/HEAD
 /review-board a..b            # a git range
 /review-board                 # the current branch plus uncommitted work
-/review-board 1243 1246 1247  # a merge train: merges the PRs locally, reviews each, opens one PR
+/review-board 1243 1246 1247  # a merge train of three PRs
 /review-board 1249 --full     # add code review and the repo's checks to a single PR
 /review-board 1249 --restyle  # match the page to your project's design tokens
 ```
@@ -69,6 +81,7 @@ skills.sh: `npx skills@latest update review-board`.
 ```bash
 pnpm install
 pnpm check        # lint, types, unit and integration tests, plugin manifest, browser tests
+pnpm screenshots  # rebuild the README images from a demo repo
 ```
 
 The skill itself is `skills/review-board/` and has no dependencies; everything else in the repo is tooling and tests.

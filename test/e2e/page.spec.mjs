@@ -61,7 +61,7 @@ test.describe('train board', () => {
     await expect(page.locator('#chips .step.on')).toHaveAttribute('data-set', '12');
     await expect(page.locator('#tree .file')).toHaveCount(1);
     await expect(page.locator('.editor-body .ov-set h2')).toHaveText(['#12 feat/format']);
-    await expect(page.locator('.editor-body .ov-set .ov-sec').nth(1)).toContainText('Nothing flagged by path and code review found nothing to report.');
+    await expect(page.locator('.editor-body .ov-set .ov-sec').nth(1)).toContainText('Nothing flagged by path. Code review found nothing to report.');
   });
 
   test('opening a file shows one file tab, its risk flags and note above the diff, and the finding pinned to its line', async ({ page }) => {
